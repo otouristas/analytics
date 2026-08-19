@@ -17,6 +17,11 @@ import { cn } from "@/lib/utils";
  * `signature` tints the glow with the surface's own `--signature-h` instead of
  * the fixed blue core, which is how a section gets its own light without
  * leaving the brand.
+ *
+ * IMPORTANT: a Bloom is large and usually offset beyond its container's edge,
+ * so the positioned ancestor MUST carry `overflow-hidden`. Without it the glow
+ * widens the document and the page scrolls horizontally on narrow viewports —
+ * the decoration is invisible, but the sideways scroll is very visible.
  */
 export function Bloom({
   className,

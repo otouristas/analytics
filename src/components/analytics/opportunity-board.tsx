@@ -26,7 +26,7 @@ export function OpportunityBoard() {
   const p0 = searchRows?.filter((r) => r.priority === "P0").length ?? 0;
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto pb-16">
+    <div className="min-h-0 flex-1 overflow-y-auto dock-safe">
       <PillarHeader
         eyebrow="Prioritised actions"
         title="Opportunities"

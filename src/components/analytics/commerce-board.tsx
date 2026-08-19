@@ -109,7 +109,7 @@ export function CommerceBoard() {
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto pb-16">
+    <div className="flex-1 overflow-y-auto dock-safe">
       {/* 1. Property Header */}
       <PropertyHeader
         title="Revenue Intelligence"

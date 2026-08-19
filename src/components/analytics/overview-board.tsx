@@ -69,7 +69,7 @@ export function OverviewBoard() {
   const { data: syncRun } = useLatestSyncRun(liveProject?.id);
 
   return (
-    <div className="flex-1 overflow-y-auto pb-16">
+    <div className="flex-1 overflow-y-auto dock-safe">
       {/* 1. Reusable Property Header */}
       <PropertyHeader
         title={project.name}

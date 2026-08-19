@@ -3,6 +3,10 @@ import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { HeroSection } from "@/components/marketing/hero-section";
 import { SocialProof } from "@/components/marketing/social-proof";
 import { FeatureSection } from "@/components/marketing/feature-section";
+import { ProblemSection } from "@/components/marketing/problem-section";
+import { SignalChain } from "@/components/marketing/signal-chain";
+import { ValueProof } from "@/components/marketing/value-proof";
+import { UseCases } from "@/components/marketing/use-cases";
 import { IntegrationsGrid } from "@/components/marketing/integrations-grid";
 import { PricingSection } from "@/components/marketing/pricing-section";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
@@ -27,8 +31,20 @@ function MarketingPage() {
         {/* 3. Social Proof & Metric Badges */}
         <SocialProof />
 
-        {/* 4. Product Story & Split Feature Sections */}
+        {/* 4. The argument: a number is not a finding */}
+        <ProblemSection />
+
+        {/* 5. How the signals connect, end to end */}
+        <SignalChain />
+
+        {/* 6. Product Story & Split Feature Sections */}
         <FeatureSection />
+
+        {/* 7. Traffic vs. value, argued with two real pages */}
+        <ValueProof />
+
+        {/* 8. Who it's for */}
+        <UseCases />
 
         {/* 5. Connected Integrations Grid */}
         <IntegrationsGrid />

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Compass, Search, Sparkles, Bot, BarChart3, Target, ArrowUpRight } from "lucide-react";
+import { Search, Sparkles, Bot, BarChart3, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type MobileTabId = "home" | "analytics" | "search" | "opportunities" | "ai";
@@ -17,14 +17,20 @@ const TABS: { id: MobileTabId; label: string; icon: typeof LayoutDashboard }[] =
   { id: "ai", label: "Ask", icon: Bot },
 ];
 
+/**
+ * The floating glass dock.
+ *
+ * Each tab is an equal-width column so the five labels sit on a fixed rhythm
+ * regardless of word length — "Opportunities" is more than twice the width of
+ * "Ask", and `justify-around` let that drag the whole row off-centre. Labels
+ * scale down rather than wrap, because a wrapped label changes the dock's
+ * height and makes it jump.
+ */
 export function MobileBottomTab({ activeTab, onTabChange, className }: MobileBottomTabProps) {
   return (
     <nav
-      aria-label="Mobile navigation"
-      className={cn(
-        "mobile-dock flex items-center justify-around md:hidden",
-        className,
-      )}
+      aria-label="Primary"
+      className={cn("mobile-dock grid grid-cols-5 gap-0.5 md:hidden", className)}
     >
       {TABS.map((tab) => {
         const Icon = tab.icon;
@@ -35,16 +41,28 @@ export function MobileBottomTab({ activeTab, onTabChange, className }: MobileBot
             key={tab.id}
             type="button"
             onClick={() => onTabChange(tab.id)}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
-              "relative flex flex-col items-center justify-center gap-1 py-1 px-3 min-w-[56px] min-h-[44px] rounded-xl transition-all duration-150 active:scale-95",
-              isActive ? "text-accent" : "text-muted hover:text-fg",
+              "relative flex min-h-11 flex-col items-center justify-center gap-1 rounded-2xl px-0.5 py-1.5",
+              "transition-[background,color,transform] duration-200 ease-[var(--ease-out-soft)] active:scale-[0.94]",
+              isActive ? "dock-tab-active text-accent" : "text-muted",
             )}
           >
-            <Icon className={cn("size-5 transition-transform duration-150", isActive && "scale-110")} />
-            <span className="text-[10px] font-medium tracking-tight leading-none">{tab.label}</span>
-            {isActive && (
-              <span className="absolute bottom-0.5 size-1 rounded-full bg-accent animate-pulse" />
-            )}
+            <Icon
+              className={cn(
+                "size-[1.125rem] shrink-0 transition-transform duration-200 ease-[var(--ease-out-soft)]",
+                isActive && "-translate-y-px scale-105",
+              )}
+              strokeWidth={isActive ? 2.25 : 1.75}
+            />
+            <span
+              className={cn(
+                "max-w-full truncate text-[10px] leading-none tracking-tight",
+                isActive ? "font-semibold" : "font-medium",
+              )}
+            >
+              {tab.label}
+            </span>
           </button>
         );
       })}

@@ -54,12 +54,14 @@ function AppLayout() {
       <AppSidebar />
 
       {/* Main App Workspace Canvas */}
-      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col pb-16 md:pb-0">
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Global Product Header */}
         <AppHeader onOpenAIPanel={() => setAiOpen(true)} />
 
         {/* Dashboard Workspace Boards */}
-        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
+        {/* `dock-safe` reserves exactly the floating dock's height plus the
+            safe-area inset, so the last row of every board clears it. */}
+        <div className="dock-safe flex min-h-0 flex-1 flex-col overflow-y-auto">
           <Dashboard hideChrome />
         </div>
 

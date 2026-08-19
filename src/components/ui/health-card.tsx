@@ -45,7 +45,11 @@ export function HealthCard({
         <span className="text-xl font-semibold tracking-tight text-fg font-sans tabular-nums">
           {metric}
         </span>
-        {sparkline && <div className="h-5 w-14 shrink-0 opacity-85 group-hover:opacity-100 transition-opacity">{sparkline}</div>}
+        {sparkline && (
+          <div className="h-5 w-14 shrink-0 overflow-hidden opacity-85 transition-opacity group-hover:opacity-100">
+            {sparkline}
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between text-[11px]">

@@ -130,13 +130,16 @@ export function PillarHeader({
           </nav>
         )}
 
-        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+        {/* Actions sit beside the title from `sm` up and BELOW it on phones.
+            Sharing the row at 390px squeezed the title into two lines that ran
+            straight under the buttons. */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-x-6">
           <div className="min-w-0 flex-1">
             {eyebrow && <span className="eyebrow">{eyebrow}</span>}
 
             <div
               className={cn(
-                "flex flex-wrap items-baseline gap-x-3 gap-y-1",
+                "flex flex-col gap-y-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-3",
                 eyebrow && (isMarketing ? "mt-4" : "mt-2"),
               )}
             >
@@ -149,18 +152,27 @@ export function PillarHeader({
                 {title}
               </h1>
               {ident && (
-                <span className="font-mono text-xs text-accent">{ident}</span>
+                <span className="min-w-0 truncate font-mono text-xs text-accent">{ident}</span>
               )}
             </div>
 
             {dek && <p className="pillar-dek">{dek}</p>}
 
-            {badges && <div className="mt-3 flex flex-wrap items-center gap-2">{badges}</div>}
+            {badges && (
+              // Status pills stay on ONE line and scroll horizontally on
+              // phones. Wrapping turned each pill into a three-line block and
+              // pushed the KPI strip below the fold.
+              <div className="scrollbar-none -mx-4 mt-3 flex items-center gap-2 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&>*]:shrink-0 [&_span]:whitespace-nowrap">
+                {badges}
+              </div>
+            )}
 
             {meta && <p className={cn("pillar-meta", badges ? "mt-4" : "mt-5")}>{meta}</p>}
           </div>
 
-          {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+          {actions && (
+            <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+          )}
         </div>
 
         {children}
