@@ -2,62 +2,65 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, TrendingUp, ShieldCheck, CheckCircle2, ArrowUpRight } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Bloom } from "@/components/ui/primitives";
+import { PillarHeader } from "@/components/ui/pillar-header";
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden pb-16 pt-24 sm:pb-24 sm:pt-32 lg:pt-40">
+    <section className="relative overflow-hidden">
       {/* The hero light: the brand gradient rendered as a blue-to-green radial,
           breathing on an 8s cycle. It sits above the page's blueprint grid. */}
-      <Bloom className="left-1/2 top-[-6rem] h-[32rem] w-[64rem] -translate-x-1/2" />
+      <Bloom className="left-1/2 top-[-8rem] h-[34rem] w-[68rem] -translate-x-1/2" />
       <div className="pointer-events-none absolute inset-0 meridian-cross opacity-[0.03]" />
 
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 text-center">
-        {/* Eyebrow badge. The trailing tagline is hidden below `sm` — at 390px
-            it wrapped the pill onto two lines, which reads as a broken button
-            rather than a label. */}
-        <div className="relative mb-7 inline-flex max-w-full items-center gap-2 whitespace-nowrap rounded-full border border-hairline bg-surface px-3 py-1.5 text-xs font-medium text-muted">
-          <span className="flex size-1.5 shrink-0 rounded-full bg-brand" />
-          <span className="font-semibold text-fg">Meridian Intelligence 2.0</span>
-          <span className="hidden text-subtle sm:inline">·</span>
-          <span className="hidden sm:inline">Analytics that explains what matters</span>
-        </div>
+      {/* The homepage pillar header. Same component the inner pages and the
+          product use — centred form, oversized display type, bordered eyebrow
+          pill, CTA pair and a reassurance line. */}
+      <PillarHeader
+        variant="marketing"
+        align="center"
+        grid={false}
+        eyebrowPill
+        eyebrow="Analytics intelligence for modern teams"
+        title={
+          <>
+            Know what changed.
+            <br />
+            <span className="line-2">Know what to do next.</span>
+          </>
+        }
+        dek="Meridian connects traffic, Search Console, visitor intent, conversions and business outcomes into one intelligent workspace."
+        className="hero-below-header"
+        ctas={
+          <>
+            <Link
+              to="/app"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-accent-fg transition-opacity hover:opacity-90 active:scale-[0.98]"
+            >
+              <span>Start free</span>
+              <ArrowRight className="size-4" />
+            </Link>
+            <Link
+              to="/app"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-hairline bg-surface-raised px-6 py-3 text-sm font-semibold text-fg transition-colors hover:border-brand/40"
+            >
+              <span>Explore live workspace</span>
+            </Link>
+          </>
+        }
+        footnote={
+          // The icon flows INSIDE the text run rather than as a flex sibling.
+          // As a flex item it was pinned to the left edge while the wrapped
+          // text centred beside it, leaving the shield stranded on its own.
+          <>
+            <ShieldCheck className="mr-1.5 inline-block size-3.5 -translate-y-px text-brand align-middle" />
+            Connect Search Console in minutes. No credit card required.
+          </>
+        }
+      />
 
-        {/* Hero headline */}
-        <h1 className="rise-in relative text-balance font-display text-[2rem] font-medium leading-[1.07] tracking-[-0.035em] text-fg sm:text-5xl sm:leading-[1.05] sm:tracking-[-0.04em] lg:text-6xl">
-          Your analytics should tell you <span className="text-accent">what to do next</span>.
-        </h1>
-
-        {/* Supporting description */}
-        <p className="mx-auto mt-5 max-w-2xl text-pretty text-[0.9375rem] leading-relaxed text-muted sm:mt-6 sm:text-lg">
-          Meridian connects traffic, Search Console, visitor intent, conversions and business outcomes into one intelligent workspace.
-        </p>
-
-        {/* CTA group */}
-        <div className="mt-8 flex flex-col items-stretch justify-center gap-2.5 sm:flex-row sm:items-center sm:gap-3">
-          <Link
-            to="/app"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-accent-fg transition-opacity hover:opacity-90 active:scale-[0.98]"
-          >
-            <span>Start free</span>
-            <ArrowRight className="size-4" />
-          </Link>
-
-          <Link
-            to="/app"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-hairline bg-surface-raised px-6 py-3 text-sm font-semibold text-fg transition-colors hover:border-brand/40"
-          >
-            <span>Explore live workspace</span>
-          </Link>
-        </div>
-
-        {/* Trust subtext */}
-        <div className="mt-4 flex items-center justify-center gap-2 text-xs text-subtle">
-          <ShieldCheck className="size-3.5 text-positive" />
-          <span>Connect Search Console in minutes. No credit card required.</span>
-        </div>
-
+      <div className="mx-auto max-w-6xl px-6 pb-20 sm:pb-28">
         {/* Floating Product Hero Visual */}
-        <div className="relative mt-14 sm:mt-20">
+        <div className="relative">
           {/* Master floating window. `frame-halo` is the product-frame glow the
               design system reserves for mockups — a coloured halo plus a real
               drop shadow, rather than a blurred gradient rectangle. */}

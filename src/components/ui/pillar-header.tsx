@@ -29,6 +29,20 @@ export interface PillarHeaderProps {
   /** Uppercase metadata line under the dek ("66 days of data", "3 properties"). */
   meta?: ReactNode;
   kpis?: PillarKpi[];
+  /** Buttons under the dek. The marketing counterpart to `actions`. */
+  ctas?: ReactNode;
+  /** Small reassurance line under the CTAs ("No credit card required."). */
+  footnote?: ReactNode;
+  /**
+   * Centred is the homepage form; left is every inner pillar page. Applies to
+   * the marketing variant only — the product header is always left.
+   */
+  align?: "left" | "center";
+  /**
+   * Render the eyebrow as a bordered pill rather than a bare line. The
+   * homepage form on the reference site.
+   */
+  eyebrowPill?: boolean;
   /**
    * `marketing` is the editorial opener: oversized display type, deep padding,
    * blueprint ground with a bloom overhead. `product` is the in-app pillar
@@ -68,6 +82,10 @@ export function PillarHeader({
   actions,
   meta,
   kpis,
+  ctas,
+  footnote,
+  align,
+  eyebrowPill = false,
   variant = "product",
   signatureHue,
   grid = true,
@@ -75,6 +93,8 @@ export function PillarHeader({
   children,
 }: PillarHeaderProps) {
   const isMarketing = variant === "marketing";
+  // Inner pillar pages are left-aligned; the homepage form is centred.
+  const centered = isMarketing && align === "center";
 
   return (
     <header
@@ -102,16 +122,29 @@ export function PillarHeader({
         className={cn(
           "relative",
           isMarketing
-            ? "mx-auto max-w-6xl px-6 pb-12 pt-6"
+            ? "mx-auto max-w-6xl px-6 pb-16 pt-8 sm:pb-20 sm:pt-10"
             : "px-4 pb-5 pt-5 sm:px-6",
+          centered && "text-center",
         )}
       >
         {crumbs && crumbs.length > 0 && (
-          <nav aria-label="Breadcrumb" className="mb-4">
-            <ol className="flex flex-wrap items-center gap-1 text-xs text-muted">
+          <nav aria-label="Breadcrumb" className={cn("mb-5", centered && "flex justify-center")}>
+            <ol
+              className={cn(
+                "flex flex-wrap items-center text-muted",
+                isMarketing ? "gap-1.5 text-sm" : "gap-1 text-xs",
+              )}
+            >
               {crumbs.map((crumb, i) => (
-                <li key={`${crumb.label}-${i}`} className="flex items-center gap-1">
-                  {i > 0 && <ChevronRight className="size-3 text-subtle" aria-hidden="true" />}
+                <li key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
+                  {i > 0 &&
+                    (isMarketing ? (
+                      <span aria-hidden="true" className="text-subtle">
+                        /
+                      </span>
+                    ) : (
+                      <ChevronRight className="size-3 text-subtle" aria-hidden="true" />
+                    ))}
                   {crumb.href ? (
                     <a
                       href={crumb.href}
@@ -133,20 +166,36 @@ export function PillarHeader({
         {/* Actions sit beside the title from `sm` up and BELOW it on phones.
             Sharing the row at 390px squeezed the title into two lines that ran
             straight under the buttons. */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-x-6">
-          <div className="min-w-0 flex-1">
-            {eyebrow && <span className="eyebrow">{eyebrow}</span>}
+        <div
+          className={cn(
+            "flex flex-col gap-4",
+            !centered && "sm:flex-row sm:items-start sm:justify-between sm:gap-x-6",
+          )}
+        >
+          <div className={cn("min-w-0 flex-1", centered && "flex flex-col items-center")}>
+            {eyebrow &&
+              (eyebrowPill ? (
+                // The bordered pill form: a hairline capsule around the green
+                // all-caps line, as on the reference homepage.
+                <span className="eyebrow inline-flex rounded-full border border-hairline bg-surface px-3.5 py-1.5">
+                  {eyebrow}
+                </span>
+              ) : (
+                <span className="eyebrow">{eyebrow}</span>
+              ))}
 
             <div
               className={cn(
                 "flex flex-col gap-y-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-3",
-                eyebrow && (isMarketing ? "mt-4" : "mt-2"),
+                centered && "sm:justify-center",
+                eyebrow && (isMarketing ? "mt-6" : "mt-2"),
               )}
             >
               <h1
                 className={cn(
                   "pillar-title min-w-0",
-                  isMarketing && "pillar-title--marketing rise-in max-w-3xl",
+                  isMarketing && "pillar-title--marketing rise-in",
+                  isMarketing && (centered ? "max-w-4xl" : "max-w-3xl"),
                 )}
               >
                 {title}
@@ -156,7 +205,11 @@ export function PillarHeader({
               )}
             </div>
 
-            {dek && <p className="pillar-dek">{dek}</p>}
+            {dek && (
+              <p className={cn("pillar-dek", isMarketing && "text-base sm:text-lg", centered && "mx-auto text-center")}>
+                {dek}
+              </p>
+            )}
 
             {badges && (
               // Status pills stay on ONE line and scroll horizontally on
@@ -168,6 +221,28 @@ export function PillarHeader({
             )}
 
             {meta && <p className={cn("pillar-meta", badges ? "mt-4" : "mt-5")}>{meta}</p>}
+
+            {ctas && (
+              <div
+                className={cn(
+                  "mt-8 flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:gap-3",
+                  centered && "sm:justify-center",
+                )}
+              >
+                {ctas}
+              </div>
+            )}
+
+            {footnote && (
+              <p
+                className={cn(
+                  "mt-4 text-xs leading-relaxed text-subtle sm:text-[0.8125rem]",
+                  centered && "mx-auto max-w-md text-center",
+                )}
+              >
+                {footnote}
+              </p>
+            )}
           </div>
 
           {actions && (

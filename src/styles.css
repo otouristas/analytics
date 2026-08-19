@@ -481,6 +481,15 @@ html.light {
     letter-spacing: 0.18em;
     color: var(--color-brand);
   }
+  /* Wide tracking is what makes an eyebrow read as an eyebrow, but at 390px it
+     is also what makes a longer one wrap to two lines inside its pill. Tighten
+     both size and tracking on phones rather than truncating the words. */
+  @media (max-width: 480px) {
+    .eyebrow {
+      font-size: 0.625rem; /* 10px */
+      letter-spacing: 0.11em;
+    }
+  }
   .stat-value {
     font-family: var(--font-sans);
     font-weight: 600;
@@ -529,14 +538,23 @@ html.light {
     letter-spacing: -0.04em;
     color: var(--color-fg);
   }
+  /* The marketing display size. Tracks the reference site: ~2rem on a phone up
+     to 4.5rem on a wide desktop, with leading tight enough that a two-line
+     headline reads as one object. */
   .pillar-title--marketing {
-    font-size: clamp(2.25rem, 1.2rem + 4.6vw, 3.75rem);
+    font-size: clamp(2rem, 1rem + 4.4vw, 4.5rem);
+    line-height: 1.02;
+    letter-spacing: -0.045em;
+  }
+  /* The second line of a two-tone marketing headline. */
+  .pillar-title--marketing .line-2 {
+    color: var(--color-accent);
   }
   .pillar-dek {
-    margin-top: 0.875rem;
+    margin-top: 1.25rem;
     max-width: 42rem;
     font-size: 0.9375rem;
-    line-height: 1.65;
+    line-height: 1.7;
     color: var(--color-muted);
   }
   .pillar-meta {
