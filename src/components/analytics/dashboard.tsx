@@ -56,7 +56,7 @@ import { useAnalytics } from "@/lib/analytics/store";
 import { cn } from "@/lib/utils";
 import { useLiveFeed, useRealtime } from "@/lib/analytics/use-live-feed";
 
-export function Dashboard() {
+export function Dashboard({ hideChrome = false }: { hideChrome?: boolean }) {
   const selectedId = useAnalytics((s) => s.selectedId);
   const setSelectedId = useAnalytics((s) => s.setSelectedId);
   const view = useAnalytics((s) => s.view);
@@ -101,6 +101,114 @@ export function Dashboard() {
     setQuery("");
     focusRef.current(id);
   };
+
+  const boardContent = (
+    <>
+      {view === "atlas" ? (
+        <div className="relative min-h-0 flex-1 bg-ocean" data-atlas-root>
+          <div className="absolute inset-0">
+            {projection === "globe" ? (
+              <WorldGlobe onFocusCountry={bindFocus} />
+            ) : (
+              <WorldMap onFocusCountry={bindFocus} />
+            )}
+          </div>
+
+          <AtlasHud />
+
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end justify-between p-3 sm:p-5">
+            <div className="pointer-events-auto flex items-center gap-3">
+              <ProjectionSwitch />
+              <button
+                type="button"
+                className="glass-pill px-3 py-1.5 text-xs text-muted hover:text-fg"
+                onClick={() => {
+                  const node = document.querySelector("[data-atlas-root]");
+                  if (node instanceof HTMLElement) void node.requestFullscreen?.();
+                }}
+              >
+                <Maximize2 className="mr-1 inline size-3.5" />
+                Fullscreen
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : view === "overview" ? (
+        <OverviewBoard />
+      ) : view === "sources" ? (
+        <SourceBoard />
+      ) : view === "attribution" ? (
+        <AttributionBoard />
+      ) : view === "radar" ? (
+        <RadarBoard />
+      ) : view === "forecast" ? (
+        <ForecastBoard />
+      ) : view === "live" ? (
+        <LiveBoard />
+      ) : view === "pages" ? (
+        <PagesBoard />
+      ) : view === "events" ? (
+        <EventsBoard />
+      ) : view === "conversions" ? (
+        <GoalsBoard />
+      ) : view === "funnels" ? (
+        <FunnelBoard />
+      ) : view === "opportunities" ? (
+        <OpportunityBoard />
+      ) : view === "devices" ? (
+        <DeviceBoard />
+      ) : view === "campaigns" ? (
+        <CampaignBoard />
+      ) : view === "commerce" ? (
+        <CommerceBoard />
+      ) : view === "cohorts" ? (
+        <CohortBoard />
+      ) : view === "alerts" ? (
+        <AlertBoard />
+      ) : view === "debug" ? (
+        <DebugBoard />
+      ) : view === "seo" ? (
+        <SeoBoard />
+      ) : view === "cause" ? (
+        <CauseBoard />
+      ) : view === "segments" ? (
+        <SegmentBoard />
+      ) : view === "engagement" ? (
+        <EngagementBoard />
+      ) : view === "intent" ? (
+        <IntentBoard />
+      ) : view === "demand" ? (
+        <DemandBoard />
+      ) : view === "bots" ? (
+        <BotsBoard />
+      ) : view === "widgets" ? (
+        <WidgetsBoard />
+      ) : view === "notes" ? (
+        <NotesBoard />
+      ) : view === "integrations" ? (
+        <IntegrationsBoard />
+      ) : view === "reports" ? (
+        <ReportBoard />
+      ) : view === "query" ? (
+        <QueryBoard />
+      ) : view === "install" ? (
+        <InstallBoard />
+      ) : view === "flow" ? (
+        <FlowBoard />
+      ) : (
+        <LabBoard />
+      )}
+    </>
+  );
+
+  if (hideChrome) {
+    return (
+      <div className="flex flex-1 flex-col min-h-0">
+        {boardContent}
+        <MobilePanel open={!isDesktop && view === "atlas" && Boolean(selectedId)} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-dvh bg-bg text-fg lg:h-dvh lg:overflow-hidden">

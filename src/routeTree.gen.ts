@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as SandboxRouteImport } from './routes/sandbox'
 import { Route as ApiAgentRouteImport } from './routes/api/agent'
 import { Route as ApiCollectRouteImport } from './routes/api/collect'
@@ -34,9 +36,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SandboxRoute = SandboxRouteImport.update({
@@ -127,7 +139,9 @@ const ApiWebhooksStripeRoute = ApiWebhooksStripeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/sandbox': typeof SandboxRoute
   '/api/agent': typeof ApiAgentRoute
   '/api/collect': typeof ApiCollectRoute
@@ -148,7 +162,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app': typeof AppRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/sandbox': typeof SandboxRoute
   '/api/agent': typeof ApiAgentRoute
   '/api/collect': typeof ApiCollectRoute
@@ -170,7 +186,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/sandbox': typeof SandboxRoute
   '/api/agent': typeof ApiAgentRoute
   '/api/collect': typeof ApiCollectRoute
@@ -193,7 +211,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/app'
     | '/login'
+    | '/onboarding'
     | '/sandbox'
     | '/api/agent'
     | '/api/collect'
@@ -214,7 +234,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/app'
     | '/login'
+    | '/onboarding'
     | '/sandbox'
     | '/api/agent'
     | '/api/collect'
@@ -235,7 +257,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/app'
     | '/login'
+    | '/onboarding'
     | '/sandbox'
     | '/api/agent'
     | '/api/collect'
@@ -257,7 +281,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRoute
   LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
   SandboxRoute: typeof SandboxRoute
   ApiAgentRoute: typeof ApiAgentRoute
   ApiCollectRoute: typeof ApiCollectRoute
@@ -286,11 +312,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sandbox': {
@@ -417,7 +457,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRoute,
   LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
   SandboxRoute: SandboxRoute,
   ApiAgentRoute: ApiAgentRoute,
   ApiCollectRoute: ApiCollectRoute,

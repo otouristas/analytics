@@ -1,9 +1,9 @@
 import { useState, useMemo } from "react";
-import { AlertTriangle, CheckCircle2, ShieldAlert, Sparkles, RefreshCw, Zap } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ShieldAlert, Sparkles, RefreshCw, Zap, ArrowRight } from "lucide-react";
+import { PropertyHeader } from "@/components/product/property-header";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { scanAnomalies, type AnomalySeverity } from "@/lib/analytics/anomaly-radar";
 import { useRealtime } from "@/lib/analytics/use-live-feed";
-import { Button } from "@/components/ui/button";
-import { PageShell } from "@/components/analytics/page-shell";
 import { useAnalytics } from "@/lib/analytics/store";
 import { cn } from "@/lib/utils";
 
@@ -33,184 +33,101 @@ export function RadarBoard() {
   };
 
   return (
-    <PageShell
-      kicker={`Anomaly Radar · ${project.host}`}
-      title="Autonomous Anomaly Radar"
-      dek="Continuous statistical process control (Z-Score & IQR) scanning event streams for conversion drops, traffic surges, rage clicks, and errors."
-      actions={
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setView("debug")}>
-            Inspect Debug Log
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setView("query")}>
-            <Sparkles className="mr-1 size-3.5" />
-            Ask Meridian AI
-          </Button>
+    <div className="flex-1 overflow-y-auto pb-16">
+      {/* 1. Property Header */}
+      <PropertyHeader
+        title="Autonomous Anomaly Radar"
+        subtitle="Statistical process control (Z-Score & IQR) scanning event streams for conversions, surges, and errors"
+        kpis={[
+          { label: "Stream Status", value: report.overallHealth.toUpperCase(), delta: "Healthy", positive: report.overallHealth === "prime" },
+          { label: "Anomalies Detected", value: String(report.anomalies.length), delta: "Realtime", positive: report.anomalies.length === 0 },
+          { label: "Confidence Threshold", value: "3.0 σ (99.7%)", delta: "Calibrated", positive: true },
+          { label: "Scan Frequency", value: "Realtime", delta: "Zero lag", positive: true },
+        ]}
+      />
+
+      <div className="p-4 sm:p-6 space-y-6">
+        {/* 2. Severity Filters */}
+        <div className="flex items-center gap-2">
+          {(["all", "critical", "warning", "opportunity"] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setFilter(s)}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors",
+                filter === s
+                  ? "bg-accent text-white shadow-xs"
+                  : "border border-border bg-surface text-muted hover:text-fg hover:bg-elevated",
+              )}
+            >
+              {s}
+            </button>
+          ))}
         </div>
-      }
-    >
-      {/* Overall Health Status Bar */}
-      <section className="grid gap-px bg-border sm:grid-cols-4">
-        <HealthStat
-          label="Stream Health"
-          value={report.overallHealth.toUpperCase()}
-          tone={
-            report.overallHealth === "prime"
-              ? "positive"
-              : report.overallHealth === "critical"
-                ? "danger"
-                : "warning"
-          }
-          hint={`${report.anomalies.length} anomaly signal(s) active`}
-        />
-        <HealthStat label="Rage Clicks" value={String(report.stats.rageClicks)} hint="high-friction elements" />
-        <HealthStat label="Script Errors" value={String(report.stats.clientErrors)} hint="client exceptions" />
-        <HealthStat
-          label="LCP Performance"
-          value={report.stats.lcpAverage > 0 ? `${(report.stats.lcpAverage / 1000).toFixed(2)}s` : "Optimal"}
-          hint="average Core Web Vital"
-        />
-      </section>
 
-      {/* Filter Tabs */}
-      <section className="flex items-center gap-2 border-b border-border px-5 py-3">
-        <span className="text-xs text-muted">Filter severity:</span>
-        {(["all", "critical", "warning", "opportunity"] as const).map((sev) => (
-          <button
-            key={sev}
-            type="button"
-            onClick={() => setFilter(sev)}
-            className={cn(
-              "rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors",
-              filter === sev ? "bg-elevated text-fg shadow-[var(--shadow-border)]" : "text-muted hover:text-fg",
-            )}
-          >
-            {sev}
-            {sev !== "all" && (
-              <span className="ml-1.5 opacity-60">
-                ({report.anomalies.filter((a) => a.severity === sev).length})
-              </span>
-            )}
-          </button>
-        ))}
-      </section>
-
-      {/* Anomaly Feed */}
-      <section className="divide-y divide-border">
-        {filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center p-12 text-center">
-            <CheckCircle2 className="size-10 text-positive/80" />
-            <p className="mt-3 font-display text-xl italic text-fg">All systems operating within baseline parameters</p>
-            <p className="mt-1 text-xs text-subtle">
-              No {filter !== "all" ? filter : ""} statistical deviations detected across {report.stats.scannedEvents} events.
-            </p>
-          </div>
-        )}
-
-        {filtered.map((anomaly) => (
-          <article key={anomaly.id} className="p-5 hover:bg-surface/40 transition-colors">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <SeverityBadge severity={anomaly.severity} />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="kicker">{anomaly.metric}</span>
-                    <span className="font-mono text-xs text-subtle">Z: {anomaly.zScore > 0 ? "+" : ""}{anomaly.zScore.toFixed(1)}</span>
-                  </div>
-                  <h3 className="mt-1 font-display text-lg italic text-fg">{anomaly.title}</h3>
-                  <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">{anomaly.body}</p>
-                </div>
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={diagnosingId === anomaly.id}
-                onClick={() => handleDiagnose(anomaly.id, anomaly.actionableRecommendation)}
-              >
-                {diagnosingId === anomaly.id ? (
-                  <>
-                    <RefreshCw className="mr-1 size-3 animate-spin" />
-                    Diagnosing…
-                  </>
-                ) : (
-                  <>
-                    <Zap className="mr-1 size-3" />
-                    AI Action Plan
-                  </>
+        {/* 3. Anomalies List */}
+        <div className="space-y-3">
+          {filtered.length === 0 ? (
+            <div className="rounded-xl border border-border bg-surface p-8 text-center">
+              <CheckCircle2 className="mx-auto size-8 text-positive mb-2" />
+              <h3 className="text-sm font-semibold text-fg">Zero anomalies in current stream</h3>
+              <p className="caption mt-1">All telemetry metrics within standard 3-sigma boundaries.</p>
+            </div>
+          ) : (
+            filtered.map((anomaly) => (
+              <div
+                key={anomaly.id}
+                className={cn(
+                  "rounded-xl border p-4 shadow-xs transition-all",
+                  anomaly.severity === "critical"
+                    ? "border-danger/30 bg-danger-soft/10"
+                    : anomaly.severity === "warning"
+                      ? "border-warning/30 bg-warning-soft/10"
+                      : "border-accent/30 bg-accent-soft/10",
                 )}
-              </Button>
-            </div>
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <StatusBadge
+                        status={anomaly.severity === "critical" ? "critical" : anomaly.severity === "warning" ? "watch" : "healthy"}
+                        label={anomaly.severity.toUpperCase()}
+                        size="sm"
+                      />
+                      <span className="caption font-mono">Metric: {anomaly.metric}</span>
+                      <span className="caption font-mono font-semibold">Z-Score: {anomaly.zScore.toFixed(1)}σ</span>
+                    </div>
+                    <h4 className="text-sm font-bold text-fg tracking-tight">{anomaly.title}</h4>
+                  </div>
 
-            {/* Prescriptive Recommendation Box */}
-            <div className="mt-4 rounded-lg bg-elevated/70 p-3.5 text-xs">
-              <p className="font-medium text-fg">Recommended Intervention:</p>
-              <p className="mt-1 text-muted leading-relaxed">
-                {diagnosisResult[anomaly.id] || anomaly.actionableRecommendation}
-              </p>
-            </div>
-          </article>
-        ))}
-      </section>
-    </PageShell>
-  );
-}
+                  <button
+                    type="button"
+                    onClick={() => handleDiagnose(anomaly.id, anomaly.actionableRecommendation)}
+                    className="inline-flex items-center gap-1 rounded-lg bg-surface border border-border px-2.5 py-1 text-xs font-medium text-fg hover:bg-elevated transition-colors"
+                  >
+                    {diagnosingId === anomaly.id ? (
+                      <RefreshCw className="size-3 animate-spin text-accent" />
+                    ) : (
+                      <Zap className="size-3 text-accent" />
+                    )}
+                    <span>Diagnose</span>
+                  </button>
+                </div>
 
-function SeverityBadge({ severity }: { severity: AnomalySeverity }) {
-  if (severity === "critical") {
-    return (
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-danger/15 text-danger">
-        <ShieldAlert className="size-4" />
-      </span>
-    );
-  }
-  if (severity === "warning") {
-    return (
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-400">
-        <AlertTriangle className="size-4" />
-      </span>
-    );
-  }
-  if (severity === "opportunity") {
-    return (
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-positive/15 text-positive">
-        <Sparkles className="size-4" />
-      </span>
-    );
-  }
-  return (
-    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-elevated text-subtle">
-      <CheckCircle2 className="size-4" />
-    </span>
-  );
-}
+                <p className="mt-2 text-xs text-muted leading-relaxed">{anomaly.body}</p>
 
-function HealthStat({
-  label,
-  value,
-  hint,
-  tone,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-  tone?: "positive" | "danger" | "warning";
-}) {
-  return (
-    <article className="bg-bg p-5">
-      <p className="kicker">{label}</p>
-      <p
-        className={cn(
-          "display-stat mt-2 text-3xl",
-          tone === "positive" && "text-positive",
-          tone === "danger" && "text-danger",
-          tone === "warning" && "text-amber-400",
-          !tone && "text-fg",
-        )}
-      >
-        {value}
-      </p>
-      <p className="mt-1 text-xs text-subtle">{hint}</p>
-    </article>
+                {diagnosisResult[anomaly.id] && (
+                  <div className="mt-3 rounded-lg bg-surface p-3 border border-border text-xs text-fg animate-in fade-in">
+                    <span className="caption block uppercase font-semibold text-accent mb-1">Prescriptive Remediation</span>
+                    <p>{diagnosisResult[anomaly.id]}</p>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

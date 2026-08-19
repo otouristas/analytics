@@ -1,13 +1,11 @@
 import { useState } from "react";
-import { useRealtime } from "@/lib/analytics/use-live-feed";
-import { PageShell } from "@/components/analytics/page-shell";
+import { PropertyHeader } from "@/components/product/property-header";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { getIntegrationsList, type IntegrationConnection } from "@/lib/analytics/integrations";
-import { Button } from "@/components/ui/button";
-import { Copy, Check, ExternalLink, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react";
+import { Copy, Check, CheckCircle2, Layers, Plus, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function IntegrationsBoard() {
-  const { project } = useRealtime();
   const [integrations, setIntegrations] = useState<IntegrationConnection[]>(getIntegrationsList());
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -18,83 +16,124 @@ export function IntegrationsBoard() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  return (
-    <PageShell
-      kicker={`Integrations · ${project.host}`}
-      title="Connected Services &amp; Webhooks"
-      dek="Connect server-trusted payment providers, advertising networks, and CMS plugins. Meridian validates signatures and ensures clean data provenance."
-    >
-      <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
-        {integrations.map((item) => {
-          const isConnected = item.status === "connected";
-          return (
-            <div
-              key={item.id}
-              className="flex flex-col justify-between rounded-2xl border border-border bg-surface/50 p-5 transition-all hover:border-border/80"
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <h3 className="font-display text-lg italic text-fg">{item.name}</h3>
-                  <span
-                    className={cn(
-                      "flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium capitalize",
-                      isConnected ? "bg-positive/10 text-positive" : "bg-elevated text-subtle",
-                    )}
-                  >
-                    {isConnected ? (
-                      <>
-                        <CheckCircle2 className="size-3" /> Connected
-                      </>
-                    ) : (
-                      "Not Connected"
-                    )}
-                  </span>
-                </div>
+  const connected = integrations.filter((i) => i.status === "connected");
+  const available = integrations.filter((i) => i.status !== "connected");
 
-                <p className="mt-2 text-xs text-muted">
-                  {item.category === "payment"
-                    ? "Inbound server webhooks for confirmed purchases, bookings, and refunds."
-                    : item.category === "advertising"
-                      ? "Cost and campaign performance data synchronization."
+  return (
+    <div className="flex-1 overflow-y-auto pb-16">
+      {/* 1. Property Header */}
+      <PropertyHeader
+        title="Integrations & Webhooks"
+        subtitle="Connect verified payment gateways, ad networks, GSC, and AI protocols"
+        kpis={[
+          { label: "Active Integrations", value: String(connected.length), delta: "Healthy", positive: true },
+          { label: "Available Connectors", value: String(available.length), delta: "Ready", positive: true },
+          { label: "Webhook Latency", value: "< 240ms", delta: "Normal", positive: true },
+          { label: "Signature Security", value: "HMAC-SHA256", delta: "Enforced", positive: true },
+        ]}
+      />
+
+      <div className="p-4 sm:p-6 space-y-8">
+        {/* 2. Connected Integrations Section */}
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-sm font-semibold text-fg tracking-tight">Connected Services</h2>
+            <span className="caption rounded-full bg-positive-soft px-2 py-0.2 font-medium text-positive">
+              {connected.length} active
+            </span>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {connected.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-col justify-between rounded-xl border border-border bg-surface p-4 shadow-xs"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-fg">{item.name}</h3>
+                    <StatusBadge status="connected" size="sm" />
+                  </div>
+
+                  <p className="mt-1.5 text-xs text-muted leading-relaxed">
+                    {item.category === "payment"
+                      ? "Inbound server webhooks for confirmed purchases and refunds."
                       : item.category === "seo"
                         ? "Search impression and keyword query aggregate feeds."
                         : "First-party script tag injection and cookie-free analytics."}
-                </p>
+                  </p>
 
-                {item.webhookUrl && !item.webhookUrl.includes("plugins") && (
-                  <div className="mt-4 rounded-lg bg-elevated/70 p-2.5">
-                    <p className="text-[10px] text-subtle font-mono uppercase">Webhook URL Endpoint</p>
-                    <div className="mt-1 flex items-center justify-between gap-2">
-                      <span className="truncate font-mono text-[11px] text-fg">
-                        {item.webhookUrl}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(item.id, item.webhookUrl)}
-                        className="rounded p-1 text-muted hover:text-fg transition-colors"
-                        aria-label="Copy Webhook URL"
-                      >
-                        {copiedId === item.id ? (
-                          <Check className="size-3.5 text-positive" />
-                        ) : (
-                          <Copy className="size-3.5" />
-                        )}
-                      </button>
+                  {item.webhookUrl && !item.webhookUrl.includes("plugins") && (
+                    <div className="mt-3 rounded-lg bg-elevated/60 p-2 border border-border/50">
+                      <span className="caption block uppercase font-mono text-[10px]">Endpoint</span>
+                      <div className="mt-0.5 flex items-center justify-between gap-1">
+                        <span className="truncate font-mono text-[11px] text-accent">{item.webhookUrl}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(item.id, item.webhookUrl)}
+                          className="rounded p-1 text-muted hover:text-fg"
+                        >
+                          {copiedId === item.id ? <Check className="size-3 text-positive" /> : <Copy className="size-3" />}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
 
-              <div className="mt-5 flex items-center justify-between border-t border-border pt-3">
-                <span className="text-[11px] text-subtle capitalize">Category: {item.category}</span>
-                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => handleCopy(item.id, item.webhookUrl)}>
-                  {copiedId === item.id ? "Copied" : "Copy Endpoint"}
-                </Button>
+                <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-2 text-xs">
+                  <span className="caption capitalize">{item.category}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(item.id, item.webhookUrl)}
+                    className="text-xs font-medium text-accent hover:underline"
+                  >
+                    {copiedId === item.id ? "Copied" : "Copy Endpoint"}
+                  </button>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            ))}
+          </div>
+        </section>
+
+        {/* 3. Available Connectors Section */}
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-sm font-semibold text-fg tracking-tight">Available Integrations</h2>
+            <span className="caption">{available.length} connectors</span>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {available.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-col justify-between rounded-xl border border-border bg-surface/60 p-4 hover:border-border-strong transition-colors"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-fg">{item.name}</h3>
+                    <StatusBadge status="neutral" label="Available" size="sm" />
+                  </div>
+                  <p className="mt-1.5 text-xs text-muted leading-relaxed">
+                    Connect {item.name} to stream external events and enrich conversion intelligence.
+                  </p>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-2">
+                  <span className="caption capitalize">{item.category}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(item.id, item.webhookUrl)}
+                    className="inline-flex items-center gap-1 rounded-md bg-elevated px-2.5 py-1 text-xs font-medium text-fg hover:bg-subtle-surface transition-colors"
+                  >
+                    <Plus className="size-3" />
+                    <span>Connect</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
-    </PageShell>
+    </div>
   );
 }
