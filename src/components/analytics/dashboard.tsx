@@ -40,6 +40,7 @@ import { BotsBoard } from "@/components/analytics/bots-board";
 import { WidgetsBoard } from "@/components/analytics/widgets-board";
 import { NotesBoard } from "@/components/analytics/notes-board";
 import { IntegrationsBoard } from "@/components/analytics/integrations-board";
+import { SearchConsoleBoard } from "@/components/analytics/search-console-board";
 import { GoalsBoard } from "@/components/analytics/goals-board";
 import { DemandBoard } from "@/components/analytics/demand-board";
 import { FilterBar } from "@/components/analytics/filter-bar";
@@ -187,6 +188,8 @@ export function Dashboard({ hideChrome = false }: { hideChrome?: boolean }) {
         <NotesBoard />
       ) : view === "integrations" ? (
         <IntegrationsBoard />
+      ) : view === "searchconsole" ? (
+        <SearchConsoleBoard />
       ) : view === "reports" ? (
         <ReportBoard />
       ) : view === "query" ? (
@@ -345,6 +348,8 @@ export function Dashboard({ hideChrome = false }: { hideChrome?: boolean }) {
         <NotesBoard />
       ) : view === "integrations" ? (
         <IntegrationsBoard />
+      ) : view === "searchconsole" ? (
+        <SearchConsoleBoard />
       ) : view === "reports" ? (
         <ReportBoard />
       ) : view === "query" ? (

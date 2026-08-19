@@ -38,6 +38,7 @@ export function AppHeader({ onOpenAIPanel }: { onOpenAIPanel?: () => void }) {
     attribution: "Attribution",
     pages: "Pages",
     seo: "Search Intelligence",
+    searchconsole: "Search Console",
     events: "Events",
     conversions: "Goals",
     funnels: "Funnels",

@@ -16,17 +16,36 @@ function AppLayout() {
   const setView = useAnalytics((s) => s.setView);
   useLiveFeed();
 
-  // Map mobile tabs to workspace views
-  const activeMobileTab: MobileTabId =
-    view === "overview" || view === "atlas"
-      ? "home"
-      : view === "sources" || view === "pages" || view === "events"
-        ? "analytics"
-        : view === "seo"
-          ? "search"
-          : view === "opportunities" || view === "radar" || view === "forecast"
-            ? "opportunities"
-            : "ai";
+  // Which dock tab is lit for the current workspace view. Views reachable only
+  // from the sidebar still have to map to SOMETHING, but they must map to the
+  // tab they belong under — everything unlisted used to fall through to "Ask",
+  // so opening Search Console lit the AI tab.
+  const TAB_BY_VIEW: Partial<Record<WorkspaceView, MobileTabId>> = {
+    overview: "home",
+    atlas: "home",
+    live: "home",
+    sources: "analytics",
+    pages: "analytics",
+    events: "analytics",
+    attribution: "analytics",
+    campaigns: "analytics",
+    commerce: "analytics",
+    cohorts: "analytics",
+    segments: "analytics",
+    engagement: "analytics",
+    devices: "analytics",
+    seo: "search",
+    searchconsole: "search",
+    intent: "search",
+    demand: "search",
+    opportunities: "opportunities",
+    radar: "opportunities",
+    forecast: "opportunities",
+    cause: "opportunities",
+    query: "ai",
+  };
+
+  const activeMobileTab: MobileTabId = TAB_BY_VIEW[view] ?? "home";
 
   const handleMobileTabChange = (tab: MobileTabId) => {
     switch (tab) {
@@ -37,7 +56,8 @@ function AppLayout() {
         setView("sources");
         break;
       case "search":
-        setView("seo");
+        // Toggle between the two search surfaces so the tab reaches both.
+        setView(view === "seo" ? "searchconsole" : "seo");
         break;
       case "opportunities":
         setView("opportunities");

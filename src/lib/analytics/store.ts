@@ -37,7 +37,8 @@ export type WorkspaceView =
   | "bots"
   | "widgets"
   | "notes"
-  | "integrations";
+  | "integrations"
+  | "searchconsole";
 export type ThemeId = "dark" | "light";
 export type ProjectionId = "globe" | "flat";
 export type FeedStatus = "connecting" | "live" | "empty" | "error";

@@ -56,6 +56,7 @@ const GROUPS: { label: string; items: { id: WorkspaceView; label: string; icon: 
       { id: "attribution", label: "Attribution", icon: GitBranch },
       { id: "pages", label: "Pages", icon: FileText },
       { id: "seo", label: "Search Intelligence", icon: Search },
+      { id: "searchconsole", label: "Search Console", icon: Globe2 },
       { id: "events", label: "Events", icon: MousePointerClick },
       { id: "conversions", label: "Goals", icon: Target },
       { id: "funnels", label: "Funnels", icon: Filter },

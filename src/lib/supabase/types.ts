@@ -11,7 +11,7 @@
  */
 
 /** A Search Console property the user has connected. */
-export interface GscProperty {
+export type GscProperty = {
   id: string;
   user_id: string;
   project_id: string | null;
@@ -22,7 +22,7 @@ export interface GscProperty {
   selected: boolean | null;
   created_at: string;
   updated_at: string;
-}
+};
 
 /**
  * Which dimensions a `gsc_search_analytics` row is broken down by. Rows are
@@ -36,7 +36,7 @@ export type GscDimensionSet =
   | "hour_query_page";
 
 /** One Search Console metric row at a given dimension breakdown. */
-export interface GscSearchAnalyticsRow {
+export type GscSearchAnalyticsRow = {
   id: string;
   seo_project_id: string;
   site_url: string;
@@ -56,10 +56,10 @@ export interface GscSearchAnalyticsRow {
   /** Average position; LOWER is better, so deltas invert. */
   position: number;
   imported_at: string;
-}
+};
 
 /** A Search Console ingest run — powers "last sync" and sync health. */
-export interface GscSyncRun {
+export type GscSyncRun = {
   id: string;
   seo_project_id: string;
   site_url: string;
@@ -72,10 +72,10 @@ export interface GscSyncRun {
   error: string | null;
   started_at: string;
   finished_at: string | null;
-}
+};
 
 /** A tracked site. Meridian's "property". */
-export interface SeoProject {
+export type SeoProject = {
   id: string;
   user_id: string;
   name: string;
@@ -88,13 +88,13 @@ export interface SeoProject {
   money_page_pattern: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
 /** The worker emits P0 (act now) through P3, not adjectives. */
 export type OpportunityPriority = "P0" | "P1" | "P2" | "P3";
 
 /** A prioritised action surfaced by the search-intelligence worker. */
-export interface SearchIntelligenceOpportunity {
+export type SearchIntelligenceOpportunity = {
   id: string;
   user_id: string;
   project_id: string;
@@ -112,9 +112,27 @@ export interface SearchIntelligenceOpportunity {
   last_seen_at: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface Profile {
+/** A query the user has asked Meridian to keep a ranking history for. */
+export type TrackedKeyword = {
+  id: string;
+  user_id: string;
+  /** The Search Console property id this keyword belongs to. */
+  property: string;
+  keyword: string;
+  project_id: string | null;
+  target_position: number | null;
+  active: boolean | null;
+  query_type: string | null;
+  word_count: number | null;
+  location_code: number | null;
+  language_code: string | null;
+  device: string | null;
+  created_at: string;
+};
+
+export type Profile = {
   id: string;
   user_id: string;
   full_name: string | null;
@@ -126,25 +144,31 @@ export interface Profile {
   preferences: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
-}
+};
+
+/**
+ * supabase-js resolves its insert/update generics through this shape. Each
+ * table needs Row, Insert, Update AND Relationships — omitting Relationships
+ * makes the generic collapse to `never`, and every `.insert()` argument is
+ * then rejected as not assignable to `never`.
+ */
+type TableDef<T> = {
+  Row: T;
+  Insert: Partial<T>;
+  Update: Partial<T>;
+  Relationships: [];
+};
 
 export interface Database {
   public: {
     Tables: {
-      gsc_properties: { Row: GscProperty; Insert: Partial<GscProperty>; Update: Partial<GscProperty> };
-      gsc_search_analytics: {
-        Row: GscSearchAnalyticsRow;
-        Insert: Partial<GscSearchAnalyticsRow>;
-        Update: Partial<GscSearchAnalyticsRow>;
-      };
-      gsc_sync_runs: { Row: GscSyncRun; Insert: Partial<GscSyncRun>; Update: Partial<GscSyncRun> };
-      seo_projects: { Row: SeoProject; Insert: Partial<SeoProject>; Update: Partial<SeoProject> };
-      search_intelligence_opportunities: {
-        Row: SearchIntelligenceOpportunity;
-        Insert: Partial<SearchIntelligenceOpportunity>;
-        Update: Partial<SearchIntelligenceOpportunity>;
-      };
-      profiles: { Row: Profile; Insert: Partial<Profile>; Update: Partial<Profile> };
+      gsc_properties: TableDef<GscProperty>;
+      gsc_search_analytics: TableDef<GscSearchAnalyticsRow>;
+      gsc_sync_runs: TableDef<GscSyncRun>;
+      seo_projects: TableDef<SeoProject>;
+      search_intelligence_opportunities: TableDef<SearchIntelligenceOpportunity>;
+      tracked_keywords: TableDef<TrackedKeyword>;
+      profiles: TableDef<Profile>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

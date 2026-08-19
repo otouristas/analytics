@@ -1,5 +1,10 @@
-import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { supabaseEnabled } from "./client";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseQueryResult,
+} from "@tanstack/react-query";
+import { requireSupabase, supabaseEnabled } from "./client";
 import { useSupabaseUserId } from "./auth";
 import {
   fetchDailyTotals,
@@ -16,6 +21,13 @@ import {
   type DimensionRow,
   type SearchTotals,
 } from "./queries";
+import {
+  importGscProperties,
+  linkPropertyToProject,
+  listGoogleSites,
+  trackKeywords,
+  type GoogleSite,
+} from "./gsc";
 import type { SeoProject } from "./types";
 
 /**
@@ -158,5 +170,86 @@ export function useGscProperties() {
     queryKey: ["gsc-properties", userId],
     enabled,
     queryFn: fetchGscProperties,
+  });
+}
+
+
+// ── Search Console import ────────────────────────────────────────────────────
+
+/**
+ * The properties on the user's Google account.
+ *
+ * Not fetched until asked for (`enabled: false` by default): it costs a live
+ * Google API round-trip through an edge function, so it belongs behind an
+ * explicit "load my properties" action rather than firing on page mount.
+ */
+export function useGoogleSites(enabled: boolean): UseQueryResult<GoogleSite[]> {
+  const { userId, enabled: live } = useLiveGate(enabled);
+  return useQuery({
+    queryKey: ["google-sites", userId],
+    queryFn: listGoogleSites,
+    enabled: live,
+    retry: false,
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Import selected Google properties, then refresh what the app shows. */
+export function useImportProperties() {
+  const userId = useSupabaseUserId();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (sites: GoogleSite[]) => {
+      if (!userId) throw new Error("Sign in to import properties.");
+      return importGscProperties(userId, sites);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["gsc-properties"] });
+    },
+  });
+}
+
+/** Attach an imported Search Console property to a Meridian property. */
+export function useLinkProperty() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ gscPropertyId, seoProjectId }: { gscPropertyId: string; seoProjectId: string | null }) =>
+      linkPropertyToProject(gscPropertyId, seoProjectId),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["gsc-properties"] });
+    },
+  });
+}
+
+/** Start tracking a set of queries. */
+export function useTrackKeywords() {
+  const userId = useSupabaseUserId();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ property, keywords, projectId }: { property: string; keywords: string[]; projectId?: string }) => {
+      if (!userId) throw new Error("Sign in to track keywords.");
+      return trackKeywords(userId, property, keywords, projectId);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["tracked-keywords"] });
+    },
+  });
+}
+
+/** Queries already being tracked, so the UI can show what is already added. */
+export function useTrackedKeywords(property: string | undefined) {
+  const { userId, enabled } = useLiveGate(Boolean(property));
+  return useQuery({
+    queryKey: ["tracked-keywords", userId, property],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await requireSupabase()
+        .from("tracked_keywords")
+        .select("keyword")
+        .eq("property", property!)
+        .eq("active", true);
+      if (error) throw new Error(error.message);
+      return new Set((data ?? []).map((r) => r.keyword));
+    },
   });
 }
