@@ -357,44 +357,54 @@ function insertBeforeHeadClose(html, snippet) {
 }
 
 export function normalizeHeadContext(ctx = {}) {
-  const cwd = ctx.cwd ?? process.cwd();
-  const site = ctx.site !== undefined ? ctx.site : snapshotOgIdentity(cwd).site;
-  const appName = resolveOgTitle(site, ctx.appName ?? DEFAULT_APP_NAME, ctx.host ?? "");
+  const normalized = typeof ctx === "string" ? { appName: ctx } : ctx || {};
+  const cwd = normalized.cwd ?? (typeof process !== "undefined" ? process.cwd() : "");
+  const site = normalized.site !== undefined ? normalized.site : (cwd ? snapshotOgIdentity(cwd).site : {});
+  const appName = normalized.appName || resolveOgTitle(site, DEFAULT_APP_NAME, normalized.host ?? "");
   return {
     appName,
-    projectId: ctx.projectId ?? readGrokProjectId(),
-    creator: ctx.creator ?? readXCreator(),
-    creatorId: ctx.creatorId ?? readXCreatorId(),
-    host: ctx.host ?? "",
+    projectId: normalized.projectId ?? readGrokProjectId(),
+    creator: normalized.creator ?? readXCreator(),
+    creatorId: normalized.creatorId ?? readXCreatorId(),
+    host: normalized.host ?? "",
     cwd,
     site,
   };
 }
 
-export function injectGrokPwaHead(html, ctx = {}) {
+export function injectGrokPwaHead(html, ctxOrAppName = {}, projectIdArg, creatorArg, creatorIdArg) {
   if (typeof html !== "string") return html;
+  const ctx = typeof ctxOrAppName === "string"
+    ? { appName: ctxOrAppName, projectId: projectIdArg, creator: creatorArg, creatorId: creatorIdArg }
+    : (ctxOrAppName || {});
   const { site, projectId, creator, creatorId, host } = normalizeHeadContext(ctx);
   const documentTitle = titleFromDocument(html);
-  const appName = resolveOgTitle(
+  const appName = ctx.appName || resolveOgTitle(
     site,
-    ctx.appName ?? DEFAULT_APP_NAME,
+    DEFAULT_APP_NAME,
     host,
     documentTitle,
   );
-  let next = stripShareMetaTags(html);
+  const next = html;
 
-  const missing = grokPwaHeadTags(appName)
-    .filter(([key]) => {
-      if (key === "manifest") return !next.includes('href="/__grok/manifest.webmanifest"');
-      if (key === "apple-touch-icon") return !next.includes('href="/__grok/icon-180.png"');
-      return !next.includes(`name="${key}"`);
-    })
-    .map(([, tag]) => tag);
+  const missing = [];
+  if (!next.includes('name="twitter:card"') && !next.includes("name='twitter:card'")) {
+    missing.push('<meta name="twitter:card" content="summary_large_image">');
+  }
 
-  next = insertAfterHeadOpen(
-    next,
-    grokOgHeadTags({ host, appName, site, documentTitle }).join(""),
-  );
+  for (const [key, tag] of grokPwaHeadTags(appName)) {
+    if (key === "manifest") {
+      if (!next.includes('href="/__grok/manifest.webmanifest"') && !next.includes("href='/__grok/manifest.webmanifest'")) {
+        missing.push(tag);
+      }
+    } else if (key === "apple-touch-icon") {
+      if (!next.includes('href="/__grok/icon-180.png"') && !next.includes("href='/__grok/icon-180.png'")) {
+        missing.push(tag);
+      }
+    } else if (!next.includes(`name="${key}"`) && !next.includes(`name='${key}'`)) {
+      missing.push(tag);
+    }
+  }
 
   if (!next.includes("/grok-app-builder/extensions.js")) {
     missing.push(...grokExtensionsHeadTags(projectId));

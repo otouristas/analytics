@@ -17,10 +17,17 @@ import { Route as ApiCollectRouteImport } from './routes/api/collect'
 import { Route as ApiExportRouteImport } from './routes/api/export'
 import { Route as ApiHistoryRouteImport } from './routes/api/history'
 import { Route as ApiLiveRouteImport } from './routes/api/live'
+import { Route as ApiMcpRouteImport } from './routes/api/mcp'
+import { Route as ApiPaymentsRouteImport } from './routes/api/payments'
 import { Route as ApiProjectFeedRouteImport } from './routes/api/project-feed'
 import { Route as ApiStatsRouteImport } from './routes/api/stats'
 import { Route as STokenRouteImport } from './routes/s.$token'
+import { Route as WTokenRouteImport } from './routes/w.$token'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiWebhooksLemonsqueezyRouteImport } from './routes/api/webhooks/lemonsqueezy'
+import { Route as ApiWebhooksPolarRouteImport } from './routes/api/webhooks/polar'
+import { Route as ApiWebhooksShopifyRouteImport } from './routes/api/webhooks/shopify'
+import { Route as ApiWebhooksStripeRouteImport } from './routes/api/webhooks/stripe'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -62,6 +69,16 @@ const ApiLiveRoute = ApiLiveRouteImport.update({
   path: '/api/live',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMcpRoute = ApiMcpRouteImport.update({
+  id: '/api/mcp',
+  path: '/api/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPaymentsRoute = ApiPaymentsRouteImport.update({
+  id: '/api/payments',
+  path: '/api/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiProjectFeedRoute = ApiProjectFeedRouteImport.update({
   id: '/api/project-feed',
   path: '/api/project-feed',
@@ -77,9 +94,34 @@ const STokenRoute = STokenRouteImport.update({
   path: '/s/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WTokenRoute = WTokenRouteImport.update({
+  id: '/w/$token',
+  path: '/w/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWebhooksLemonsqueezyRoute = ApiWebhooksLemonsqueezyRouteImport.update({
+  id: '/api/webhooks/lemonsqueezy',
+  path: '/api/webhooks/lemonsqueezy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWebhooksPolarRoute = ApiWebhooksPolarRouteImport.update({
+  id: '/api/webhooks/polar',
+  path: '/api/webhooks/polar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWebhooksShopifyRoute = ApiWebhooksShopifyRouteImport.update({
+  id: '/api/webhooks/shopify',
+  path: '/api/webhooks/shopify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWebhooksStripeRoute = ApiWebhooksStripeRouteImport.update({
+  id: '/api/webhooks/stripe',
+  path: '/api/webhooks/stripe',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -92,10 +134,17 @@ export interface FileRoutesByFullPath {
   '/api/export': typeof ApiExportRoute
   '/api/history': typeof ApiHistoryRoute
   '/api/live': typeof ApiLiveRoute
+  '/api/mcp': typeof ApiMcpRoute
+  '/api/payments': typeof ApiPaymentsRoute
   '/api/project-feed': typeof ApiProjectFeedRoute
   '/api/stats': typeof ApiStatsRoute
   '/s/$token': typeof STokenRoute
+  '/w/$token': typeof WTokenRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/webhooks/lemonsqueezy': typeof ApiWebhooksLemonsqueezyRoute
+  '/api/webhooks/polar': typeof ApiWebhooksPolarRoute
+  '/api/webhooks/shopify': typeof ApiWebhooksShopifyRoute
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -106,10 +155,17 @@ export interface FileRoutesByTo {
   '/api/export': typeof ApiExportRoute
   '/api/history': typeof ApiHistoryRoute
   '/api/live': typeof ApiLiveRoute
+  '/api/mcp': typeof ApiMcpRoute
+  '/api/payments': typeof ApiPaymentsRoute
   '/api/project-feed': typeof ApiProjectFeedRoute
   '/api/stats': typeof ApiStatsRoute
   '/s/$token': typeof STokenRoute
+  '/w/$token': typeof WTokenRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/webhooks/lemonsqueezy': typeof ApiWebhooksLemonsqueezyRoute
+  '/api/webhooks/polar': typeof ApiWebhooksPolarRoute
+  '/api/webhooks/shopify': typeof ApiWebhooksShopifyRoute
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -121,10 +177,17 @@ export interface FileRoutesById {
   '/api/export': typeof ApiExportRoute
   '/api/history': typeof ApiHistoryRoute
   '/api/live': typeof ApiLiveRoute
+  '/api/mcp': typeof ApiMcpRoute
+  '/api/payments': typeof ApiPaymentsRoute
   '/api/project-feed': typeof ApiProjectFeedRoute
   '/api/stats': typeof ApiStatsRoute
   '/s/$token': typeof STokenRoute
+  '/w/$token': typeof WTokenRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/webhooks/lemonsqueezy': typeof ApiWebhooksLemonsqueezyRoute
+  '/api/webhooks/polar': typeof ApiWebhooksPolarRoute
+  '/api/webhooks/shopify': typeof ApiWebhooksShopifyRoute
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,10 +200,17 @@ export interface FileRouteTypes {
     | '/api/export'
     | '/api/history'
     | '/api/live'
+    | '/api/mcp'
+    | '/api/payments'
     | '/api/project-feed'
     | '/api/stats'
     | '/s/$token'
+    | '/w/$token'
     | '/api/auth/$'
+    | '/api/webhooks/lemonsqueezy'
+    | '/api/webhooks/polar'
+    | '/api/webhooks/shopify'
+    | '/api/webhooks/stripe'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -151,10 +221,17 @@ export interface FileRouteTypes {
     | '/api/export'
     | '/api/history'
     | '/api/live'
+    | '/api/mcp'
+    | '/api/payments'
     | '/api/project-feed'
     | '/api/stats'
     | '/s/$token'
+    | '/w/$token'
     | '/api/auth/$'
+    | '/api/webhooks/lemonsqueezy'
+    | '/api/webhooks/polar'
+    | '/api/webhooks/shopify'
+    | '/api/webhooks/stripe'
   id:
     | '__root__'
     | '/'
@@ -165,10 +242,17 @@ export interface FileRouteTypes {
     | '/api/export'
     | '/api/history'
     | '/api/live'
+    | '/api/mcp'
+    | '/api/payments'
     | '/api/project-feed'
     | '/api/stats'
     | '/s/$token'
+    | '/w/$token'
     | '/api/auth/$'
+    | '/api/webhooks/lemonsqueezy'
+    | '/api/webhooks/polar'
+    | '/api/webhooks/shopify'
+    | '/api/webhooks/stripe'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -180,10 +264,17 @@ export interface RootRouteChildren {
   ApiExportRoute: typeof ApiExportRoute
   ApiHistoryRoute: typeof ApiHistoryRoute
   ApiLiveRoute: typeof ApiLiveRoute
+  ApiMcpRoute: typeof ApiMcpRoute
+  ApiPaymentsRoute: typeof ApiPaymentsRoute
   ApiProjectFeedRoute: typeof ApiProjectFeedRoute
   ApiStatsRoute: typeof ApiStatsRoute
   STokenRoute: typeof STokenRoute
+  WTokenRoute: typeof WTokenRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiWebhooksLemonsqueezyRoute: typeof ApiWebhooksLemonsqueezyRoute
+  ApiWebhooksPolarRoute: typeof ApiWebhooksPolarRoute
+  ApiWebhooksShopifyRoute: typeof ApiWebhooksShopifyRoute
+  ApiWebhooksStripeRoute: typeof ApiWebhooksStripeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -244,6 +335,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/mcp': {
+      id: '/api/mcp'
+      path: '/api/mcp'
+      fullPath: '/api/mcp'
+      preLoaderRoute: typeof ApiMcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/payments': {
+      id: '/api/payments'
+      path: '/api/payments'
+      fullPath: '/api/payments'
+      preLoaderRoute: typeof ApiPaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/project-feed': {
       id: '/api/project-feed'
       path: '/api/project-feed'
@@ -265,11 +370,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof STokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/w/$token': {
+      id: '/w/$token'
+      path: '/w/$token'
+      fullPath: '/w/$token'
+      preLoaderRoute: typeof WTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/webhooks/lemonsqueezy': {
+      id: '/api/webhooks/lemonsqueezy'
+      path: '/api/webhooks/lemonsqueezy'
+      fullPath: '/api/webhooks/lemonsqueezy'
+      preLoaderRoute: typeof ApiWebhooksLemonsqueezyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/webhooks/polar': {
+      id: '/api/webhooks/polar'
+      path: '/api/webhooks/polar'
+      fullPath: '/api/webhooks/polar'
+      preLoaderRoute: typeof ApiWebhooksPolarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/webhooks/shopify': {
+      id: '/api/webhooks/shopify'
+      path: '/api/webhooks/shopify'
+      fullPath: '/api/webhooks/shopify'
+      preLoaderRoute: typeof ApiWebhooksShopifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/webhooks/stripe': {
+      id: '/api/webhooks/stripe'
+      path: '/api/webhooks/stripe'
+      fullPath: '/api/webhooks/stripe'
+      preLoaderRoute: typeof ApiWebhooksStripeRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -284,10 +424,17 @@ const rootRouteChildren: RootRouteChildren = {
   ApiExportRoute: ApiExportRoute,
   ApiHistoryRoute: ApiHistoryRoute,
   ApiLiveRoute: ApiLiveRoute,
+  ApiMcpRoute: ApiMcpRoute,
+  ApiPaymentsRoute: ApiPaymentsRoute,
   ApiProjectFeedRoute: ApiProjectFeedRoute,
   ApiStatsRoute: ApiStatsRoute,
   STokenRoute: STokenRoute,
+  WTokenRoute: WTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiWebhooksLemonsqueezyRoute: ApiWebhooksLemonsqueezyRoute,
+  ApiWebhooksPolarRoute: ApiWebhooksPolarRoute,
+  ApiWebhooksShopifyRoute: ApiWebhooksShopifyRoute,
+  ApiWebhooksStripeRoute: ApiWebhooksStripeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

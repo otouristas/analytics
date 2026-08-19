@@ -27,9 +27,15 @@ import {
   ShoppingBag,
   Sparkles,
   SquareTerminal,
+  ShieldAlert,
   Table2,
   Target,
+  TrendingUp,
   Users,
+  Bot,
+  StickyNote,
+  LayoutGrid,
+  Layers,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -46,6 +52,7 @@ const GROUPS: { label: string; items: { id: WorkspaceView; label: string; icon: 
     label: "Understand",
     items: [
       { id: "sources", label: "Acquisition", icon: Share2 },
+      { id: "attribution", label: "Attribution", icon: GitBranch },
       { id: "pages", label: "Pages", icon: FileText },
       { id: "seo", label: "SEO", icon: Search },
       { id: "events", label: "Events", icon: MousePointerClick },
@@ -63,6 +70,8 @@ const GROUPS: { label: string; items: { id: WorkspaceView; label: string; icon: 
   {
     label: "Intelligence",
     items: [
+      { id: "radar", label: "Anomaly Radar", icon: ShieldAlert },
+      { id: "forecast", label: "Forecast", icon: TrendingUp },
       { id: "opportunities", label: "Opportunities", icon: Sparkles },
       { id: "cause", label: "Root cause", icon: Compass },
       { id: "intent", label: "Intent", icon: Compass },
@@ -70,6 +79,15 @@ const GROUPS: { label: string; items: { id: WorkspaceView; label: string; icon: 
       { id: "alerts", label: "Alerts", icon: Bell },
       { id: "reports", label: "Reports", icon: Table2 },
       { id: "query", label: "Ask Meridian", icon: SquareTerminal },
+    ],
+  },
+  {
+    label: "Connect",
+    items: [
+      { id: "integrations", label: "Integrations", icon: Layers },
+      { id: "bots", label: "Bot Sentinel", icon: Bot },
+      { id: "notes", label: "Timeline Notes", icon: StickyNote },
+      { id: "widgets", label: "Embed Widgets", icon: LayoutGrid },
     ],
   },
   {

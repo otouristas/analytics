@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { countryFromIso2, ingestEvent, isValidKey, type EventKind } from "@/lib/analytics/ingest";
 import { persistEvent } from "@/lib/analytics/warehouse";
+import { isExcluded } from "@/lib/analytics/exclusions";
+import { classifyUserAgent } from "@/lib/analytics/bot-classifier";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +21,10 @@ const KINDS: EventKind[] = [
   "scroll",
   "form",
   "download",
+  "rage_click",
+  "error",
+  "conversion",
+  "identify",
 ];
 
 export const Route = createFileRoute("/api/collect")({
@@ -39,6 +45,22 @@ export const Route = createFileRoute("/api/collect")({
         if (!isValidKey(writeKey)) {
           return Response.json({ ok: false, error: "Unknown write key" }, { status: 401, headers: CORS });
         }
+
+        const clientIp =
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip") ||
+          "";
+        const path = String(body.path ?? "/");
+
+        // 1. Path & IP Exclusions
+        if (isExcluded(path, clientIp)) {
+          return Response.json({ ok: true, dropped: true }, { headers: CORS });
+        }
+
+        // 2. User Agent & Bot Classification
+        const ua = request.headers.get("user-agent");
+        const botInfo = classifyUserAgent(ua);
+
         const headerCountry =
           request.headers.get("x-vercel-ip-country") ||
           request.headers.get("cf-ipcountry") ||
@@ -46,12 +68,13 @@ export const Route = createFileRoute("/api/collect")({
         const geo = countryFromIso2(body.country ? String(body.country) : headerCountry);
         const rawKind = String(body.kind ?? body.event ?? "pageview");
         const kind = KINDS.includes(rawKind as EventKind) ? (rawKind as EventKind) : "custom";
+
         const event = ingestEvent({
           writeKey,
           sessionId: body.sessionId ? String(body.sessionId) : undefined,
           kind,
           host: body.host ? String(body.host) : "",
-          path: String(body.path ?? "/"),
+          path,
           title: String(body.title ?? "Page"),
           fromPath: body.fromPath ? String(body.fromPath) : "",
           href: body.href ? String(body.href) : "",
@@ -68,9 +91,16 @@ export const Route = createFileRoute("/api/collect")({
           campaign: body.campaign ? String(body.campaign) : "",
           medium: body.medium ? String(body.medium) : "",
           name: body.name ? String(body.name) : undefined,
+          isBot: botInfo.isBot,
+          botType: botInfo.botType,
+          valueType: body.valueType === "confirmed" ? "confirmed" : body.valueType === "estimated" ? "estimated" : undefined,
+          amountCents: typeof body.amountCents === "number" ? body.amountCents : undefined,
+          currency: typeof body.currency === "string" ? body.currency : undefined,
+          props: body.props && typeof body.props === "object" ? (body.props as Record<string, unknown>) : undefined,
         });
+
         void persistEvent(event);
-        return Response.json({ ok: true, id: event.id }, { headers: CORS });
+        return Response.json({ ok: true, id: event.id, bot: botInfo.isBot }, { headers: CORS });
       },
     },
   },

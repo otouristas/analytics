@@ -28,6 +28,7 @@
   var lastPath = location.pathname + location.search;
   var seenScroll = {};
   var seenVital = {};
+  var recentClicks = [];
 
   function guessSource() {
     try {
@@ -93,6 +94,7 @@
       device: info.mobile ? "mobile" : "desktop",
       os: info.os,
       browser: info.browser,
+      props: extra.props || undefined,
     };
     var body = JSON.stringify(payload);
     var url = origin + "/api/collect";
@@ -121,19 +123,69 @@
   document.addEventListener(
     "click",
     function (event) {
+      var now = Date.now();
       var node = event.target;
+      var targetPath = (node && node.tagName ? node.tagName.toLowerCase() : "") + (node && node.id ? "#" + node.id : "");
+      
+      // Rage click detection: 3+ rapid clicks within 500ms on the same target
+      recentClicks.push({ time: now, target: targetPath, x: event.clientX, y: event.clientY });
+      recentClicks = recentClicks.filter(function (c) { return now - c.time < 500; });
+      if (recentClicks.length >= 3) {
+        var sameTarget = recentClicks.every(function (c) { return c.target === targetPath; });
+        if (sameTarget) {
+          send({
+            kind: "rage_click",
+            label: "rage:" + targetPath,
+            path: location.pathname,
+            props: { clicks: recentClicks.length, x: event.clientX, y: event.clientY }
+          });
+          recentClicks = [];
+        }
+      }
+
       while (node && node.tagName !== "A" && node.tagName !== "BUTTON") node = node.parentElement;
       if (!node) return;
+      var goalAttr = node.getAttribute("data-meridian-goal");
+      var eventAttr = node.getAttribute("data-meridian-event");
+      if (goalAttr) {
+        send({
+          kind: "conversion",
+          label: goalAttr.trim(),
+          path: location.pathname,
+          title: document.title,
+        });
+      }
+      if (eventAttr) {
+        send({
+          kind: "custom",
+          label: eventAttr.trim(),
+          path: location.pathname,
+          title: document.title,
+        });
+      }
       if (node.tagName === "A" && node.href) {
         var url;
         try {
           url = new URL(node.href, location.href);
-        } catch (e) {
+        } catch (_e) {
           return;
         }
         var label = (node.innerText || node.getAttribute("aria-label") || url.pathname).trim().slice(0, 80);
         var outbound = url.host && url.host !== location.host;
         var file = /\.(pdf|zip|csv|xlsx|docx)(\?|$)/i.test(url.pathname);
+        var allowedDomains = (script && script.getAttribute("data-domains") ? script.getAttribute("data-domains").split(",") : []);
+        for (var d = 0; d < allowedDomains.length; d++) {
+          var dom = allowedDomains[d].trim();
+          if (dom && url.host.indexOf(dom) !== -1 && url.host !== location.host) {
+            try {
+              url.searchParams.set("_msid", sid);
+              node.href = url.href;
+            } catch (_err) {
+              /* noop */
+            }
+            break;
+          }
+        }
         send({
           kind: file ? "download" : outbound ? "outbound" : "click",
           href: url.href,
@@ -141,10 +193,28 @@
           path: location.pathname,
           title: document.title,
         });
+      } else if (node.tagName === "BUTTON") {
+        var btnLabel = (node.innerText || node.getAttribute("aria-label") || node.id || "button").trim().slice(0, 80);
+        send({
+          kind: "click",
+          label: btnLabel,
+          path: location.pathname,
+          title: document.title,
+        });
       }
     },
     true,
   );
+
+  window.addEventListener("error", function (event) {
+    if (!event.message) return;
+    send({
+      kind: "error",
+      label: (event.message || "").slice(0, 100),
+      path: location.pathname,
+      query: (event.filename || "").split("/").pop() + ":" + event.lineno,
+    });
+  });
 
   document.addEventListener(
     "submit",
@@ -246,16 +316,31 @@
         title: (props && props.title) || document.title,
         href: (props && String(props.href)) || "",
         query: (props && (props.query || props.term)) || "",
+        props: props || undefined,
       });
     },
     page: pageview,
-    identify: function () {},
+    identify: function (userId, traits) {
+      if (!userId) return;
+      send({
+        kind: "custom",
+        label: "identify",
+        query: String(userId),
+        props: traits || undefined,
+      });
+    },
     consent: function (flags) {
       allowed = !flags || flags.analytics !== false;
     },
     revenue: function (info) {
       info = info || {};
-      send({ kind: "custom", label: "purchase", title: String(info.transactionId || "purchase"), query: String(info.amount || "") });
+      send({
+        kind: "custom",
+        label: "purchase",
+        title: String(info.transactionId || "purchase"),
+        query: String(info.amount || ""),
+        props: info,
+      });
     },
   };
   pageview("");

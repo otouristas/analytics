@@ -1,4 +1,5 @@
 import { ChannelLogo } from "@/components/analytics/channel-logo";
+import { JourneySankey } from "@/components/analytics/journey-sankey";
 import { CHANNEL_BY_ID } from "@/lib/analytics/channels";
 import { summarize, type IngestEvent } from "@/lib/analytics/ingest";
 import { formatPct } from "@/lib/analytics/model";
@@ -8,7 +9,7 @@ import { useRealtime } from "@/lib/analytics/use-live-feed";
 import { useEffect, useMemo, useState } from "react";
 
 export function FlowBoard() {
-  const { events, status, project, live, people } = useRealtime();
+  const { events, project, live, people } = useRealtime();
   const projectId = useAnalytics((s) => s.projectId);
   const writeKey = PROJECT_BY_ID[projectId].writeKey;
   const [history, setHistory] = useState<IngestEvent[]>([]);
@@ -40,6 +41,14 @@ export function FlowBoard() {
         <Stat label="All clicks" value={String(stats.clicks)} hint={`${stats.internal} in · ${stats.outbound} out`} />
         <Stat label="Outbound" value={String(stats.outbound)} hint="left the site" />
         <Stat label="Exits" value={String(stats.exits)} hint="session end" />
+      </section>
+
+      <section className="border-t border-border bg-bg p-5">
+        <p className="kicker">Journey Funnel Flow</p>
+        <h3 className="mt-1 font-display text-xl italic text-fg">Multi-Stage Flow &amp; Drop-off</h3>
+        <div className="mt-4">
+          <JourneySankey people={people} />
+        </div>
       </section>
 
       <section className="grid gap-px border-t border-border bg-border lg:grid-cols-3">

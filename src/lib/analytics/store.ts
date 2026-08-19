@@ -20,6 +20,9 @@ export type WorkspaceView =
   | "commerce"
   | "cohorts"
   | "alerts"
+  | "radar"
+  | "attribution"
+  | "forecast"
   | "debug"
   | "seo"
   | "cause"
@@ -30,7 +33,11 @@ export type WorkspaceView =
   | "install"
   | "segments"
   | "engagement"
-  | "demand";
+  | "demand"
+  | "bots"
+  | "widgets"
+  | "notes"
+  | "integrations";
 export type ThemeId = "dark" | "light";
 export type ProjectionId = "globe" | "flat";
 export type FeedStatus = "connecting" | "live" | "empty" | "error";

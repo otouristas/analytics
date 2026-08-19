@@ -1,7 +1,7 @@
 import { Command } from "cmdk";
 import { Link } from "@tanstack/react-router";
-import { Maximize2, Moon, Search, Sun } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Moon, Search, Sun, Play, Pause, RotateCcw, History } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Drawer } from "vaul";
 import { WorldMap } from "@/components/analytics/world-map";
 import { ProjectionSwitch, WorldGlobe } from "@/components/analytics/world-globe";
@@ -23,6 +23,9 @@ import { PagesBoard } from "@/components/analytics/pages-board";
 import { EventsBoard } from "@/components/analytics/events-board";
 import { FunnelBoard } from "@/components/analytics/funnel-board";
 import { OpportunityBoard } from "@/components/analytics/opportunity-board";
+import { RadarBoard } from "@/components/analytics/radar-board";
+import { AttributionBoard } from "@/components/analytics/attribution-board";
+import { ForecastBoard } from "@/components/analytics/forecast-board";
 import { DeviceBoard } from "@/components/analytics/device-board";
 import { CampaignBoard } from "@/components/analytics/campaign-board";
 import { CommerceBoard } from "@/components/analytics/commerce-board";
@@ -33,6 +36,10 @@ import { SeoBoard } from "@/components/analytics/seo-board";
 import { CauseBoard } from "@/components/analytics/cause-board";
 import { SegmentBoard } from "@/components/analytics/segment-board";
 import { EngagementBoard } from "@/components/analytics/engagement-board";
+import { BotsBoard } from "@/components/analytics/bots-board";
+import { WidgetsBoard } from "@/components/analytics/widgets-board";
+import { NotesBoard } from "@/components/analytics/notes-board";
+import { IntegrationsBoard } from "@/components/analytics/integrations-board";
 import { GoalsBoard } from "@/components/analytics/goals-board";
 import { DemandBoard } from "@/components/analytics/demand-board";
 import { FilterBar } from "@/components/analytics/filter-bar";
@@ -180,6 +187,12 @@ export function Dashboard() {
         <OverviewBoard />
       ) : view === "sources" ? (
         <SourceBoard />
+      ) : view === "attribution" ? (
+        <AttributionBoard />
+      ) : view === "radar" ? (
+        <RadarBoard />
+      ) : view === "forecast" ? (
+        <ForecastBoard />
       ) : view === "live" ? (
         <LiveBoard />
       ) : view === "pages" ? (
@@ -216,6 +229,14 @@ export function Dashboard() {
         <IntentBoard />
       ) : view === "demand" ? (
         <DemandBoard />
+      ) : view === "bots" ? (
+        <BotsBoard />
+      ) : view === "widgets" ? (
+        <WidgetsBoard />
+      ) : view === "notes" ? (
+        <NotesBoard />
+      ) : view === "integrations" ? (
+        <IntegrationsBoard />
       ) : view === "reports" ? (
         <ReportBoard />
       ) : view === "query" ? (
@@ -246,7 +267,7 @@ export function Dashboard() {
               autoFocus
               value={query}
               onValueChange={setQuery}
-              placeholder="Jump to a country"
+              placeholder="Jump to a country or view"
               className="h-12 w-full border-b border-border bg-transparent px-4 text-sm outline-none placeholder:text-subtle"
             />
             <Command.List className="max-h-72 overflow-y-auto p-1">
@@ -256,6 +277,9 @@ export function Dashboard() {
               {[
                 ["overview", "Overview"],
                 ["atlas", "Realtime globe"],
+                ["radar", "Autonomous Anomaly Radar"],
+                ["attribution", "Multi-Touch Attribution"],
+                ["forecast", "Predictive Forecast"],
                 ["live", "Live people"],
                 ["sources", "Acquisition"],
                 ["pages", "Pages"],
@@ -264,7 +288,7 @@ export function Dashboard() {
                 ["seo", "SEO"],
                 ["segments", "Segments"],
                 ["cause", "Root cause"],
-                ["query", "Ask Meridian"],
+                ["query", "Ask Meridian AI"],
               ].map(([id, label]) => (
                 <Command.Item
                   key={id}
@@ -306,40 +330,72 @@ function AtlasHud() {
   const { live, people, sources, project, events } = useRealtime();
   const setSessionId = useAnalytics((s) => s.setSessionId);
   const core = coreMetrics(people);
-  const countries = Object.entries(
-    live.reduce<Record<string, number>>((map, person) => {
+
+  // Replay Slider State (0 = Live, 15 to 480 minutes ago in 15m increments)
+  const [replayOffset, setReplayOffset] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    const interval = setInterval(() => {
+      setReplayOffset((prev) => (prev <= 15 ? 480 : prev - 15));
+    }, 1400);
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  const displayedLive = useMemo(() => {
+    if (replayOffset === 0) return live;
+    const targetTs = Date.now() - replayOffset * 60 * 1000;
+    const windowStart = targetTs - 15 * 60 * 1000;
+    return people.filter((p) => p.lastTs >= windowStart && p.lastTs <= targetTs);
+  }, [live, people, replayOffset]);
+
+  const countries: [string, number][] = Object.entries(
+    displayedLive.reduce<Record<string, number>>((map, person) => {
       map[person.countryName] = (map[person.countryName] ?? 0) + 1;
       return map;
     }, {}),
   ).sort((a, b) => b[1] - a[1]);
-  const devices = Object.entries(
-    live.reduce<Record<string, number>>((map, person) => {
+
+  const devices: [string, number][] = Object.entries(
+    displayedLive.reduce<Record<string, number>>((map, person) => {
       map[person.device] = (map[person.device] ?? 0) + 1;
       return map;
     }, {}),
   );
+
   const feed = events
-    .filter((event) => event.kind !== "heartbeat")
+    .filter((event) => {
+      if (event.kind === "heartbeat") return false;
+      if (replayOffset === 0) return true;
+      const targetTs = Date.now() - replayOffset * 60 * 1000;
+      return event.ts <= targetTs && event.ts >= targetTs - 15 * 60 * 1000;
+    })
     .slice(0, 8);
 
   return (
     <>
+      {/* Top Left Status Box */}
       <div className="pointer-events-auto absolute top-16 left-4 z-20 w-[min(22rem,calc(100%-2rem))]">
         <div className="glass-strong rounded-2xl p-4">
           <div className="flex items-center gap-2">
             <span className="font-display text-lg italic text-fg">Meridian</span>
             <span className="flex -space-x-2">
-              {live.slice(0, 4).map((person) => (
+              {displayedLive.slice(0, 4).map((person) => (
                 <VisitorFigure key={person.id} personId={person.id} device={person.device} size="sm" />
               ))}
             </span>
           </div>
           <p className="mt-3 text-sm text-fg">
-            <span className="live-dot mr-2 inline-block size-1.5 rounded-full bg-positive" />
-            {live.length} visitors on {project.host}
+            <span className={`mr-2 inline-block size-1.5 rounded-full ${replayOffset === 0 ? "live-dot bg-positive" : "bg-amber-400"}`} />
+            {replayOffset === 0 ? (
+              <span>{live.length} live visitors on {project.host}</span>
+            ) : (
+              <span>{displayedLive.length} active in replay window</span>
+            )}
           </p>
           <p className="mt-1 text-xs text-muted">
-            Bounce {Math.round(core.bounce * 100)}% · avg {Math.round(core.avgDuration)}s · est. $0
+            Bounce {Math.round(core.bounce * 100)}% · avg {Math.round(core.avgDuration)}s · est. €{((statsConfirmed(people)) / 100).toFixed(0)}
           </p>
           <dl className="mt-3 space-y-2 text-xs text-muted">
             <div className="flex flex-wrap items-center gap-2">
@@ -355,7 +411,7 @@ function AtlasHud() {
             <div className="flex flex-wrap items-center gap-2">
               <dt className="w-16 shrink-0">Countries</dt>
               {countries.slice(0, 4).map(([name, value]) => {
-                const person = live.find((item) => item.countryName === name);
+                const person = displayedLive.find((item) => item.countryName === name);
                 const iso = person ? ISO2_BY_ID[person.countryId] ?? "" : "";
                 return (
                   <dd key={name} className="text-fg">
@@ -378,9 +434,66 @@ function AtlasHud() {
         </div>
       </div>
 
+      {/* Top Center Replay Scrubber Slider */}
+      <div className="pointer-events-auto absolute top-16 left-1/2 -translate-x-1/2 z-20 w-[min(28rem,calc(100%-2rem))]">
+        <div className="glass-strong rounded-2xl p-3 shadow-lg">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => setIsPlaying(!isPlaying)}
+              className="flex items-center gap-1.5 rounded-lg bg-elevated px-2.5 py-1 text-xs font-medium text-fg shadow-sm hover:bg-elevated/80 transition-colors"
+            >
+              {isPlaying ? <Pause className="size-3 text-amber-400" /> : <Play className="size-3 text-positive" />}
+              <span>{isPlaying ? "Pause" : "Play"}</span>
+            </button>
+
+            <div className="flex-1">
+              <div className="flex items-center justify-between text-[11px] font-mono text-muted mb-1">
+                <span className="flex items-center gap-1">
+                  <History className="size-3" />
+                  {replayOffset === 0 ? (
+                    <strong className="text-positive">LIVE STREAM</strong>
+                  ) : (
+                    <strong className="text-amber-400">-{Math.floor(replayOffset / 60)}h {replayOffset % 60}m AGO</strong>
+                  )}
+                </span>
+                <span>{replayOffset === 0 ? "Realtime" : "Replay Window"}</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={480}
+                step={15}
+                value={replayOffset}
+                onChange={(e) => {
+                  setReplayOffset(parseInt(e.target.value, 10));
+                  setIsPlaying(false);
+                }}
+                className="w-full h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-positive"
+              />
+            </div>
+
+            {replayOffset > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setReplayOffset(0);
+                  setIsPlaying(false);
+                }}
+                title="Reset to Live"
+                className="rounded p-1 text-muted hover:text-fg transition-colors"
+              >
+                <RotateCcw className="size-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Left Feed */}
       <div className="pointer-events-auto absolute bottom-16 left-4 z-20 hidden w-[min(24rem,calc(100%-2rem))] sm:block">
         <div className="glass-strong max-h-56 overflow-y-auto rounded-2xl p-3">
-          {feed.length === 0 && <p className="text-xs text-subtle">Waiting for actions…</p>}
+          {feed.length === 0 && <p className="text-xs text-subtle">No actions in selected replay slice…</p>}
           {feed.map((event) => {
             const person = people.find((item) => item.sessionId === event.sessionId);
             return (
@@ -413,6 +526,10 @@ function AtlasHud() {
       </div>
     </>
   );
+}
+
+function statsConfirmed(people: unknown[]): number {
+  return 0;
 }
 
 function MiniStat({ label, value }: { label: string; value: string }) {

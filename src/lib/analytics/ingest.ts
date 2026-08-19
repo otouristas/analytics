@@ -12,7 +12,11 @@ export type EventKind =
   | "vital"
   | "scroll"
   | "form"
-  | "download";
+  | "download"
+  | "rage_click"
+  | "error"
+  | "conversion"
+  | "identify";
 
 export type IngestEvent = {
   id: string;
@@ -39,6 +43,12 @@ export type IngestEvent = {
   medium: string;
   name: string;
   initials: string;
+  isBot?: boolean;
+  botType?: string;
+  valueType?: "confirmed" | "estimated";
+  amountCents?: number;
+  currency?: string;
+  props?: Record<string, unknown>;
   canonicalName?: import("./canonicalize").CanonicalName;
   intentStage?: import("./canonicalize").IntentStage;
   destinationId?: string;
@@ -140,6 +150,12 @@ export function ingestEvent(input: Partial<IngestEvent> & { path?: string }): In
     medium: input.medium || "",
     name,
     initials: input.initials || initialsFrom(name),
+    isBot: input.isBot ?? false,
+    botType: input.botType || (input.isBot ? "generic_bot" : "human"),
+    valueType: input.valueType,
+    amountCents: input.amountCents,
+    currency: input.currency || "EUR",
+    props: input.props,
   };
   const events = store();
   events.unshift(event);
@@ -162,20 +178,36 @@ export function isValidKey(key: string | null | undefined) {
 }
 
 export function isConversionEvent(event: IngestEvent) {
-  return isMoneyEvent(event);
+  return isMoneyEvent(event) || event.kind === "conversion" || (event.kind === "custom" && /purchase|convert|signup|lead|subscribe|booked/i.test(event.label));
 }
 
 export function summarize(events: IngestEvent[]) {
   const now = Date.now();
   const liveCutoff = now - 60_000;
+  
+  // Separate humans vs bots
+  const humanEvents = events.filter((e) => !e.isBot);
+  const botEvents = events.filter((e) => e.isBot);
+
   const liveSessions = new Set(
-    events.filter((event) => event.ts >= liveCutoff && event.kind !== "exit").map((event) => event.sessionId),
+    humanEvents.filter((event) => event.ts >= liveCutoff && event.kind !== "exit").map((event) => event.sessionId),
   );
-  const pageviews = events.filter((event) => event.kind === "pageview");
-  const clicks = events.filter((event) => event.kind === "click" || event.kind === "outbound");
-  const outbound = events.filter((event) => event.kind === "outbound");
-  const internal = events.filter((event) => event.kind === "click");
-  const exits = events.filter((event) => event.kind === "exit");
+  const pageviews = humanEvents.filter((event) => event.kind === "pageview");
+  const clicks = humanEvents.filter((event) => event.kind === "click" || event.kind === "outbound" || event.kind === "rage_click");
+  const outbound = humanEvents.filter((event) => event.kind === "outbound");
+  const internal = humanEvents.filter((event) => event.kind === "click");
+  const exits = humanEvents.filter((event) => event.kind === "exit");
+  const rageClicks = humanEvents.filter((event) => event.kind === "rage_click");
+  const errors = humanEvents.filter((event) => event.kind === "error");
+  const conversions = humanEvents.filter(isConversionEvent);
+
+  const confirmedRevenueCents = events
+    .filter((e) => e.valueType === "confirmed")
+    .reduce((sum, e) => sum + (e.amountCents ?? 0), 0);
+
+  const estimatedRevenueCents = events
+    .filter((e) => e.valueType === "estimated")
+    .reduce((sum, e) => sum + (e.amountCents ?? 0), 0);
 
   const count = (items: string[]) => {
     const map = new Map<string, number>();
@@ -189,7 +221,7 @@ export function summarize(events: IngestEvent[]) {
   };
 
   const bySession = new Map<string, IngestEvent[]>();
-  for (const event of [...events].reverse()) {
+  for (const event of [...humanEvents].reverse()) {
     const list = bySession.get(event.sessionId) ?? [];
     list.push(event);
     bySession.set(event.sessionId, list);
@@ -204,42 +236,45 @@ export function summarize(events: IngestEvent[]) {
       source: list[0]?.source ?? "direct",
       country: list[0]?.countryName ?? "",
       device: list[0]?.device ?? "desktop",
-      query: list.find((event) => event.query)?.query ?? "",
-      exit: last?.kind === "exit" ? last.path : pages[pages.length - 1] ?? "",
-      clicks: list.filter((event) => event.kind === "click" || event.kind === "outbound").length,
+      city: list[0]?.city ?? "—",
+      exited: last?.kind === "exit" || Boolean(last?.href),
+      exitHref: last?.href,
     };
   });
 
-  const flows = new Map<string, number>();
-  for (const journey of journeys) {
-    for (let i = 0; i < journey.pages.length - 1; i += 1) {
-      const key = `${journey.pages[i]} → ${journey.pages[i + 1]}`;
-      flows.set(key, (flows.get(key) ?? 0) + 1);
-    }
-  }
-
-  const landings = count(journeys.map((journey) => journey.pages[0] ?? "/"));
-  const exitPages = count(journeys.map((journey) => journey.exit).filter(Boolean));
+  const flows = count(
+    journeys.flatMap((j) => {
+      const out: string[] = [];
+      for (let i = 0; i < j.pages.length - 1; i += 1) {
+        out.push(`${j.pages[i]} → ${j.pages[i + 1]}`);
+      }
+      return out;
+    }),
+  );
 
   return {
     live: liveSessions.size,
     pageviews: pageviews.length,
     clicks: clicks.length,
-    internal: internal.length,
     outbound: outbound.length,
+    internal: internal.length,
     exits: exits.length,
-    devices: count(events.map((event) => event.device)),
-    countries: count(events.map((event) => event.countryName)),
-    sources: count(pageviews.map((event) => event.source)),
-    queries: count(events.map((event) => event.query).filter(Boolean)),
-    landings,
-    exitPages,
-    clickLabels: count(clicks.map((event) => event.label || event.path)),
-    outboundHrefs: count(outbound.map((event) => event.href || event.path)),
-    flows: [...flows.entries()]
-      .map(([label, value]) => ({ label, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 12),
-    journeys: journeys.slice(-12).reverse(),
+    rageClicks: rageClicks.length,
+    errors: errors.length,
+    conversions: conversions.length,
+    confirmedRevenueCents,
+    estimatedRevenueCents,
+    botEventsCount: botEvents.length,
+    botTypes: count(botEvents.map((e) => e.botType || "suspected")),
+    sources: count(humanEvents.map((e) => e.source)),
+    countries: count(humanEvents.map((e) => e.countryName)),
+    devices: count(humanEvents.map((e) => e.device)),
+    landings: count(journeys.map((j) => j.pages[0] || "/")),
+    exitPages: count(journeys.map((j) => j.pages[j.pages.length - 1] || "/")),
+    clickLabels: count(clicks.map((e) => e.label || e.href || e.path)),
+    outboundHrefs: count(outbound.map((e) => e.href || e.label)),
+    queries: count(humanEvents.map((e) => e.query)),
+    flows,
+    journeys,
   };
 }

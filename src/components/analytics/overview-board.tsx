@@ -80,15 +80,37 @@ export function OverviewBoard() {
         <Sparkline values={spark} />
         <p className="mt-1 text-xs text-subtle">Hits per minute, last 30 minutes of this stream</p>
         {halves && (
-          <p className="mt-2 text-xs text-muted">
-            Later half vs earlier: {halves.laterSessions} vs {halves.earlierSessions} sessions.
-          </p>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
+            <span>
+              Previous window comparison: {halves.laterSessions} vs {halves.earlierSessions} sessions (
+              {halves.earlierSessions >= 10 ? (
+                <span className={halves.laterSessions >= halves.earlierSessions ? "text-positive font-medium" : "text-danger font-medium"}>
+                  {halves.laterSessions >= halves.earlierSessions ? "+" : ""}
+                  {Math.round(((halves.laterSessions - halves.earlierSessions) / Math.max(1, halves.earlierSessions)) * 100)}%
+                </span>
+              ) : (
+                <span className="text-subtle font-mono">{halves.laterSessions - halves.earlierSessions >= 0 ? "+" : ""}{halves.laterSessions - halves.earlierSessions} Δ (n&lt;10)</span>
+              )}
+              )
+            </span>
+            <span className="text-subtle">Rule: Returning based on session persistence across visits</span>
+          </div>
         )}
       </section>
 
-      <section className="grid gap-px bg-border sm:grid-cols-2 xl:grid-cols-6">
-        <PulseStat label="Visitors" value={String(core.visitors)} hint="unique sessions" />
+      <section className="grid gap-px bg-border sm:grid-cols-2 xl:grid-cols-7">
+        <PulseStat
+          label="Visitors"
+          value={String(core.visitors)}
+          hint="unique sessions"
+          delta={halves && halves.earlierSessions >= 10 ? Math.round(((halves.laterSessions - halves.earlierSessions) / halves.earlierSessions) * 100) : undefined}
+        />
         <PulseStat label="Pageviews" value={String(core.pageviews)} hint="hits" />
+        <PulseStat
+          label="New / Returning"
+          value={`${Math.round((1 - (people.filter((p) => p.pages.length > 2).length / Math.max(1, people.length))) * 100)}% / ${Math.round((people.filter((p) => p.pages.length > 2).length / Math.max(1, people.length)) * 100)}%`}
+          hint="session retention"
+        />
         <PulseStat label="Bounce" value={formatPct(core.bounce)} hint="single-page sessions" />
         <PulseStat label="Avg time" value={formatDwellShort(core.avgDuration)} hint="session duration" />
         <PulseStat
@@ -97,6 +119,25 @@ export function OverviewBoard() {
           hint={`${core.qualified} sessions ≥ intent 20`}
         />
         <PulseStat label="Live" value={String(live.length)} hint="last 90 seconds" tone="live" />
+      </section>
+
+      {/* Confirmed Revenue & Conversion Bar */}
+      <section className="border-b border-border bg-surface/30 px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-4">
+            <span className="text-muted">
+              Confirmed Revenue: <strong className="text-fg font-mono">€{((stats.confirmedRevenueCents ?? 0) / 100).toFixed(2)}</strong>
+              {(stats.confirmedRevenueCents ?? 0) === 0 && <span className="ml-1 text-subtle">(No webhook orders yet)</span>}
+            </span>
+            <span className="text-muted">
+              Estimated Value: <span className="font-mono text-subtle">€{((stats.estimatedRevenueCents ?? 0) / 100).toFixed(2)}</span>
+              <span className="ml-1 rounded bg-elevated px-1 py-0.5 text-[10px] text-subtle">Estimated</span>
+            </span>
+          </div>
+          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setView("notes")}>
+            View Notes &amp; Releases →
+          </Button>
+        </div>
       </section>
 
       <section className="grid gap-px border-t border-border bg-border lg:grid-cols-3">
@@ -137,15 +178,24 @@ function PulseStat({
   value,
   hint,
   tone,
+  delta,
 }: {
   label: string;
   value: string;
   hint: string;
   tone?: "live";
+  delta?: number;
 }) {
   return (
     <article className="bg-bg px-5 py-5">
-      <p className="kicker">{label}</p>
+      <div className="flex items-center justify-between">
+        <p className="kicker">{label}</p>
+        {typeof delta === "number" && (
+          <span className={`font-mono text-[10px] font-semibold ${delta >= 0 ? "text-positive" : "text-danger"}`}>
+            {delta >= 0 ? "+" : ""}{delta}%
+          </span>
+        )}
+      </div>
       <p className={`display-stat mt-2 text-4xl ${tone === "live" ? "text-positive" : "text-fg"}`}>{value}</p>
       <p className="mt-1 text-xs text-subtle">{hint}</p>
     </article>

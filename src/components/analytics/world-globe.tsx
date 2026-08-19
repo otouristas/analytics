@@ -195,6 +195,8 @@ class GlobeEngine {
   private handlers: EngineHandlers | null = null;
   private flying: { from: import("three").Vector3; to: import("three").Vector3; t: number } | null = null;
   private clouds: import("three").Mesh | null = null;
+  private arcsGroup: import("three").Group | null = null;
+  private pulseParticles: { mesh: import("three").Mesh; curve: import("three").QuadraticBezierCurve3; progress: number; speed: number }[] = [];
 
   async mount(host: HTMLElement, handlers: EngineHandlers) {
     this.host = host;
@@ -392,6 +394,12 @@ class GlobeEngine {
     this.points = this.makeVisitors(THREE);
     scene.add(this.points);
 
+    // 3D Great-Circle Journey Arcs Group
+    const arcsGroup = new THREE.Group();
+    arcsGroup.name = "journeyArcs";
+    this.arcsGroup = arcsGroup;
+    scene.add(arcsGroup);
+
     this.resize = new ResizeObserver(() => this.fit());
     this.resize.observe(host);
     this.fit();
@@ -410,6 +418,14 @@ class GlobeEngine {
       }
       this.controls?.update();
       if (this.clouds) this.clouds.rotation.y += 0.00018;
+
+      // Animate pulsing journey arc particles along their Bezier paths
+      for (const p of this.pulseParticles) {
+        p.progress = (p.progress + p.speed) % 1.0;
+        const pos = p.curve.getPoint(p.progress);
+        p.mesh.position.copy(pos);
+      }
+
       if (this.points) this.points.visible = false;
       renderer.render(scene, camera);
     };
@@ -498,6 +514,9 @@ class GlobeEngine {
     const width = renderer.domElement.clientWidth;
     const height = renderer.domElement.clientHeight;
     const cam = camera.position.clone().normalize();
+
+    this.updateArcs(people);
+
     return people.map((person) => {
       const pair = this.centroids.get(person.countryId);
       if (!pair) return { id: person.id, x: 0, y: 0, visible: false };
@@ -512,6 +531,74 @@ class GlobeEngine {
         visible: facing && ndc.z < 1,
       };
     });
+  }
+
+  private lastArcKey = "";
+  updateArcs(people: { id: string; countryId: string }[]) {
+    const THREE = this.three;
+    if (!THREE || !this.arcsGroup) return;
+
+    const uniqueCountries = [...new Set(people.map((p) => p.countryId).filter(Boolean))].slice(0, 12);
+    const key = uniqueCountries.sort().join(",");
+    if (key === this.lastArcKey) return;
+    this.lastArcKey = key;
+
+    // Clear old arcs
+    while (this.arcsGroup.children.length > 0) {
+      const child = this.arcsGroup.children[0]!;
+      this.arcsGroup.remove(child);
+      if ("geometry" in child && (child as { geometry: import("three").BufferGeometry }).geometry) {
+        (child as { geometry: import("three").BufferGeometry }).geometry.dispose();
+      }
+    }
+    this.pulseParticles = [];
+
+    // Destination: Cyclades, Greece (Lat 37.08, Lng 25.14)
+    const destVec = latLngToVec(THREE, 37.08, 25.14, 1.01);
+
+    const arcMat = new THREE.LineBasicMaterial({
+      color: 0x64a798,
+      transparent: true,
+      opacity: 0.55,
+      blending: THREE.AdditiveBlending,
+    });
+
+    const particleMat = new THREE.MeshBasicMaterial({
+      color: 0x97c7b4,
+      blending: THREE.AdditiveBlending,
+    });
+    const particleGeo = new THREE.SphereGeometry(0.012, 12, 12);
+
+    for (const cid of uniqueCountries) {
+      const pair = this.centroids.get(cid);
+      if (!pair) continue;
+      const [lat, lng] = pair;
+      if (Math.abs(lat - 37.08) < 2 && Math.abs(lng - 25.14) < 2) continue; // Skip local Greece
+
+      const startVec = latLngToVec(THREE, lat, lng, 1.01);
+      const midVec = startVec.clone().add(destVec).multiplyScalar(0.5);
+      const dist = startVec.distanceTo(destVec);
+      const altitude = 1.0 + Math.min(0.5, dist * 0.35);
+      midVec.normalize().multiplyScalar(altitude);
+
+      const curve = new THREE.QuadraticBezierCurve3(startVec, midVec, destVec);
+      const points = curve.getPoints(36);
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(geo, arcMat);
+      this.arcsGroup.add(line);
+
+      // Pulse traveling particle
+      const pMesh = new THREE.Mesh(particleGeo, particleMat);
+      pMesh.position.copy(startVec);
+      this.arcsGroup.add(pMesh);
+
+      this.pulseParticles.push({
+        mesh: pMesh,
+        curve,
+        progress: Math.random(),
+        speed: 0.008 + Math.random() * 0.006,
+      });
+    }
   }
 
   flyTo(id: string) {
