@@ -584,6 +584,21 @@ html.light {
     background: var(--color-bg);
     padding: 0.875rem 1rem;
   }
+  /* The product header stacks breadcrumb, title, ident, badges, actions and a
+     2x2 KPI grid. On a 390px screen that ran to ~830px before any content, so
+     the KPI cells and title tighten up rather than pushing the board below the
+     fold. */
+  @media (max-width: 639px) {
+    .pillar-kpi {
+      padding: 0.625rem 0.875rem;
+    }
+    .pillar-kpi .stat-value {
+      font-size: 1.125rem;
+    }
+    .pillar-title {
+      font-size: 1.5rem;
+    }
+  }
 
   /* ── Map ── */
   .map-country {

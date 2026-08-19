@@ -10,6 +10,7 @@ import { writeLiveBrief } from "@/lib/analytics/ask";
 import { goalStats } from "@/lib/analytics/goals";
 import { compareHalves, coreMetrics, minuteSeries, trackingHealth } from "@/lib/analytics/insights";
 import { formatDwellShort, formatPct } from "@/lib/analytics/visitor-name";
+import { getCountry } from "@/lib/analytics/countries";
 import { useAnalytics } from "@/lib/analytics/store";
 import { useRealtime } from "@/lib/analytics/use-live-feed";
 import { useDefaultProject, useLatestSyncRun } from "@/lib/supabase/hooks";
@@ -129,7 +130,11 @@ export function OverviewBoard() {
             <StatusBadge status="healthy" label="Workspace: Healthy" size="sm" />
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+          {/* Seven cards across a 1440px canvas gave each ~130px, which
+              truncated every title but "Traffic" — the row read as a set of
+              broken labels. Capped at four columns so they wrap to two rows
+              and each title fits. */}
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
             <HealthCard
               title="Traffic"
               status="healthy"
@@ -287,7 +292,115 @@ export function OverviewBoard() {
             </div>
           </div>
         </section>
+
+        {/* 6. Live activity. The board previously ended at Top Movers, leaving
+            most of a tall screen empty; this closes it with the one thing an
+            analytics overview should always be able to answer — who is on the
+            site right now. */}
+        <LiveActivity />
       </div>
     </div>
+  );
+}
+
+/**
+ * Right-now activity: concurrent visitors, where they are, and what they are
+ * reading. Purely from the live event stream, so it is empty rather than
+ * invented when nothing is connected.
+ */
+function LiveActivity() {
+  const { live, byCountry, pages } = useRealtime();
+  const setView = useAnalytics((s) => s.setView);
+
+  // `byCountry` is keyed by numeric geo id ("840"), which is meaningless on
+  // screen. Resolve each to its real name, falling back to the raw id only if
+  // the lookup misses.
+  const countries = useMemo(
+    () =>
+      Object.entries(byCountry)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([id, count]) => ({
+          id,
+          count,
+          name: getCountry(id)?.name ?? id,
+          iso3: getCountry(id)?.iso3 ?? id,
+        })),
+    [byCountry],
+  );
+  const topPages = useMemo(() => pages.slice(0, 6), [pages]);
+
+  return (
+    <section>
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold tracking-tight text-fg">Live activity</h2>
+          <span className="caption text-[11px]">Last 30 minutes</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setView("live")}
+          className="inline-flex items-center gap-1 text-xs font-medium text-accent transition-opacity hover:opacity-80"
+        >
+          Open live view
+          <ArrowUpRight className="size-3" />
+        </button>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="rounded-xl border border-hairline bg-surface p-4">
+          <span className="kicker block">Visitors right now</span>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="stat-value text-4xl">{live.length}</span>
+            {live.length > 0 && <span className="live-dot size-2 rounded-full bg-positive" />}
+          </div>
+          <p className="caption mt-2">
+            {live.length === 0
+              ? "No active sessions in this window."
+              : `Across ${countries.length || 1} ${countries.length === 1 ? "country" : "countries"}.`}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-hairline bg-surface p-4">
+          <span className="kicker block">By country</span>
+          {countries.length === 0 ? (
+            <p className="caption mt-3">Nothing live right now.</p>
+          ) : (
+            <ul className="mt-3 space-y-1.5">
+              {countries.map((c) => (
+                <li key={c.id} className="flex items-center gap-2.5 text-xs">
+                  <span className="w-24 shrink-0 truncate text-muted" title={c.name}>
+                    {c.name}
+                  </span>
+                  <span className="h-1 flex-1 overflow-hidden rounded-full bg-subtle-surface">
+                    <span
+                      className="block h-full rounded-full bg-accent"
+                      style={{ width: `${(c.count / (countries[0]?.count || 1)) * 100}%` }}
+                    />
+                  </span>
+                  <span className="w-6 shrink-0 text-right tabular-nums text-fg">{c.count}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-hairline bg-surface p-4">
+          <span className="kicker block">Active pages</span>
+          {topPages.length === 0 ? (
+            <p className="caption mt-3">Nothing live right now.</p>
+          ) : (
+            <ul className="mt-3 space-y-1.5">
+              {topPages.map((page) => (
+                <li key={page.path} className="flex items-center justify-between gap-3 text-xs">
+                  <span className="min-w-0 truncate font-mono text-muted">{page.path}</span>
+                  <span className="shrink-0 tabular-nums text-fg">{page.value}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
