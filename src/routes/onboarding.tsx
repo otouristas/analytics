@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MeridianLogo } from "@/components/ui/meridian-logo";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
@@ -13,20 +13,65 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { useGscProperties } from "@/lib/supabase/hooks";
+import { signInWithGoogle, useSupabaseAuth } from "@/lib/supabase/auth";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/onboarding")({ component: OnboardingWizard });
 
+interface WizardProperty {
+  domain: string;
+  type: string;
+  status: string;
+  data: string;
+}
+
+/** Shown before Google is connected, so step 3 is never an empty table. */
+const SAMPLE_PROPERTIES: WizardProperty[] = [
+  { domain: "discovercyclades.gr", type: "Domain", status: "Verified", data: "16 months" },
+  { domain: "anotherseoguru.com", type: "Domain", status: "Verified", data: "16 months" },
+  { domain: "hotelssifnos.com", type: "URL prefix", status: "Verified", data: "14 months" },
+];
+
 export function OnboardingWizard() {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProps, setSelectedProps] = useState<string[]>(["discovercyclades.gr"]);
+  const [selectedProps, setSelectedProps] = useState<string[]>([]);
+  const [connecting, setConnecting] = useState(false);
 
-  const properties = [
-    { domain: "discovercyclades.gr", type: "Domain", status: "Verified", data: "16 months" },
-    { domain: "anotherseoguru.com", type: "Domain", status: "Verified", data: "16 months" },
-    { domain: "hotelssifnos.com", type: "URL prefix", status: "Verified", data: "14 months" },
-  ];
+  const { user } = useSupabaseAuth();
+  const { data: gscProperties } = useGscProperties();
+
+  // Real Search Console properties once Google is connected; the sample set
+  // until then, so the flow can be walked through before authenticating.
+  const properties: WizardProperty[] = useMemo(() => {
+    if (!gscProperties?.length) return SAMPLE_PROPERTIES;
+    return gscProperties.map((p) => ({
+      domain: p.site_url.replace(/^sc-domain:/, "").replace(/^https?:\/\//, "").replace(/\/$/, ""),
+      type: p.site_url.startsWith("sc-domain:") ? "Domain" : "URL prefix",
+      status: p.verified ? "Verified" : "Unverified",
+      data: p.permission_level ?? "—",
+    }));
+  }, [gscProperties]);
+
+  const isLive = Boolean(gscProperties?.length);
+
+  // Default the selection to everything verified, once properties resolve.
+  useEffect(() => {
+    setSelectedProps(properties.filter((p) => p.status === "Verified").map((p) => p.domain));
+  }, [properties]);
+
+  const handleConnectGoogle = async () => {
+    // Already signed in with Google? The properties are (or will be) synced by
+    // the backend, so go straight to picking them.
+    if (user) {
+      setStep(3);
+      return;
+    }
+    setConnecting(true);
+    const { error } = await signInWithGoogle("/onboarding");
+    if (error) setConnecting(false);
+  };
 
   const filteredProps = properties.filter((p) =>
     p.domain.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -149,10 +194,13 @@ export function OnboardingWizard() {
 
             <button
               type="button"
-              onClick={() => setStep(3)}
-              className="w-full inline-flex items-center justify-center gap-2.5 rounded-xl bg-accent py-3 text-xs font-semibold text-white shadow-md hover:bg-accent/90 transition-all"
+              onClick={() => void handleConnectGoogle()}
+              disabled={connecting}
+              className="inline-flex w-full items-center justify-center gap-2.5 rounded-xl bg-accent py-3 text-xs font-semibold text-accent-fg transition-opacity hover:opacity-90 disabled:opacity-60"
             >
-              <span>Connect Search Console (OAuth)</span>
+              <span>
+                {user ? "Choose properties" : connecting ? "Redirecting to Google…" : "Connect Search Console"}
+              </span>
               <ArrowRight className="size-3.5" />
             </button>
           </div>
@@ -164,7 +212,11 @@ export function OnboardingWizard() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-fg">Choose properties to import</h2>
-                <p className="mt-1 text-xs text-muted">Found 3 verified Google Search Console properties.</p>
+                <p className="mt-1 text-xs text-muted">
+                  {isLive
+                    ? `Found ${properties.length} Search Console ${properties.length === 1 ? "property" : "properties"} on your Google account.`
+                    : "Sample properties — connect Google to load your own."}
+                </p>
               </div>
               <button
                 type="button"

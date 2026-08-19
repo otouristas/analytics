@@ -3,74 +3,120 @@
 
 @custom-variant light (&:is(.light *, .light));
 
-/* ──────────────────────────────────────────────────
+/* ==========================================================================
    MERIDIAN DESIGN SYSTEM
-   ────────────────────────────────────────────────── */
+
+   Palette ported from the AnotherSEOGuru design system: blue leads (buttons,
+   links, active states), green carries the accent (eyebrows, ticks, numerals,
+   blooms, product-frame halos). The bloom glow is a blue -> green radial, i.e.
+   the brand gradient rendered as light.
+
+   Colours are oklch so `color-mix(in oklab, ...)` works in the glow and halo
+   recipes. Meridian is DARK-first (the product is a workspace people sit in
+   all day), so dark lives on :root and `html.light` is the toggle — the
+   inverse of the marketing site, same values.
+
+   Token names are Meridian's own (--color-bg, --color-fg, --color-accent…) so
+   every existing component keeps working; only the values moved.
+   ========================================================================== */
 
 @theme {
   /* ── Typography ── */
-  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: "Geist", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Geist", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   /* ── Dark theme (default) ── */
-  --color-bg: #0D0F12;
-  --color-surface: #13161A;
-  --color-elevated: #191D22;
-  --color-subtle-surface: #1E2228;
-  --color-fg: #ECEDEE;
-  --color-muted: #8B8D94;
-  --color-subtle: #5C5E66;
-  --color-accent: #5268FF;
-  --color-accent-soft: #5268FF1a;
-  --color-accent-fg: #FFFFFF;
-  --color-primary: #ECEDEE;
-  --color-primary-fg: #0D0F12;
-  --color-border: #1E2228;
-  --color-border-strong: #2A2F36;
-  --color-positive: #34D399;
-  --color-positive-soft: #34D3991a;
-  --color-warning: #FBBF24;
-  --color-warning-soft: #FBBF241a;
-  --color-danger: #EF4444;
-  --color-danger-soft: #EF44441a;
-  --color-chart-1: #5268FF;
-  --color-chart-2: #34D399;
-  --color-chart-3: #A78BFA;
-  --color-chart-4: #F59E0B;
-  --color-chart-5: #EC4899;
-  --color-chart-6: #06B6D4;
-  --color-ring: #5268FF;
+  --color-bg: oklch(0.16 0.022 259);
+  --color-surface: oklch(0.2 0.024 259);
+  --color-surface-raised: oklch(0.24 0.026 259);
+  --color-elevated: oklch(0.24 0.026 259);
+  --color-subtle-surface: oklch(0.27 0.03 259);
 
-  /* Map / Globe tokens */
-  --color-ocean: #080A0D;
-  --color-map-empty: #121518;
-  --color-map-1: #1a2535;
-  --color-map-2: #213a50;
-  --color-map-3: #2a506b;
-  --color-map-4: #346788;
-  --color-map-5: #4580a0;
-  --color-map-6: #5E9CBF;
-  --color-map-7: #82B8D6;
+  --color-fg: oklch(0.975 0.004 250);
+  --color-muted: oklch(0.7 0.022 258);
+  --color-subtle: oklch(0.58 0.022 258);
 
-  /* Shadows (dark) */
-  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4), 0 4px 6px -4px rgba(0,0,0,0.3);
-  --shadow-border: 0 0 0 1px rgba(255,255,255,0.06);
-  --shadow-border-hover: 0 0 0 1px rgba(255,255,255,0.12);
+  /* Brand blue — primary action colour */
+  --color-accent: oklch(0.68 0.17 259);
+  --color-accent-fg: oklch(0.16 0.03 259);
+  --color-accent-glow: oklch(0.76 0.15 259);
+  --color-accent-soft: color-mix(in oklab, oklch(0.68 0.17 259) 16%, transparent);
 
-  /* Glass tokens (for overlays, mobile nav, sheets — NOT data surfaces) */
-  --glass-fill: color-mix(in oklab, #13161A 55%, transparent);
-  --glass-fill-strong: color-mix(in oklab, #13161A 80%, transparent);
-  --glass-fill-thin: color-mix(in oklab, #13161A 35%, transparent);
+  /* Brand green — accent: eyebrows, ticks, numerals, glow */
+  --color-brand: oklch(0.8 0.18 152);
+  --color-brand-fg: oklch(0.18 0.04 152);
+  --color-brand-deep: oklch(0.68 0.16 150);
+  --color-brand-soft: color-mix(in oklab, oklch(0.8 0.18 152) 14%, transparent);
+
+  /* Neutral solid pair (inverted buttons) */
+  --color-primary: oklch(0.975 0.004 250);
+  --color-primary-fg: oklch(0.16 0.022 259);
+
+  --color-border: oklch(1 0 0 / 10%);
+  --color-border-strong: oklch(1 0 0 / 18%);
+  --color-hairline: oklch(1 0 0 / 9%);
+  --color-ring: oklch(0.68 0.17 259 / 55%);
+
+  --color-positive: oklch(0.8 0.18 152);
+  --color-positive-soft: color-mix(in oklab, oklch(0.8 0.18 152) 14%, transparent);
+  --color-warning: oklch(0.8 0.15 80);
+  --color-warning-soft: color-mix(in oklab, oklch(0.8 0.15 80) 14%, transparent);
+  --color-danger: oklch(0.65 0.2 25);
+  --color-danger-soft: color-mix(in oklab, oklch(0.65 0.2 25) 16%, transparent);
+
+  --color-chart-1: oklch(0.68 0.17 259);
+  --color-chart-2: oklch(0.8 0.18 152);
+  --color-chart-3: oklch(0.72 0.13 215);
+  --color-chart-4: oklch(0.78 0.15 135);
+  --color-chart-5: oklch(0.68 0.15 285);
+  --color-chart-6: oklch(0.75 0.13 195);
+
+  /* Map / Globe — same graphite-to-blue family as the canvas */
+  --color-ocean: oklch(0.13 0.02 259);
+  --color-map-empty: oklch(0.19 0.022 259);
+  --color-map-1: oklch(0.26 0.04 259);
+  --color-map-2: oklch(0.33 0.06 259);
+  --color-map-3: oklch(0.4 0.085 259);
+  --color-map-4: oklch(0.48 0.11 259);
+  --color-map-5: oklch(0.56 0.135 259);
+  --color-map-6: oklch(0.65 0.155 259);
+  --color-map-7: oklch(0.75 0.14 255);
+
+  /* Shadows are intentionally restrained — the design separates surfaces with
+     hairlines and reserves glow for the bloom and product frames. */
+  --shadow-xs: 0 1px 2px oklch(0 0 0 / 30%);
+  --shadow-sm: 0 1px 3px oklch(0 0 0 / 40%), 0 1px 2px oklch(0 0 0 / 30%);
+  --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 40%), 0 2px 4px -2px oklch(0 0 0 / 30%);
+  --shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 40%), 0 4px 6px -4px oklch(0 0 0 / 30%);
+  --shadow-border: 0 0 0 1px oklch(1 0 0 / 6%);
+  --shadow-border-hover: 0 0 0 1px oklch(1 0 0 / 12%);
+
+  /* Glass — overlays, mobile nav, sheets. NOT data surfaces. */
+  --glass-fill: color-mix(in oklab, oklch(0.2 0.024 259) 55%, transparent);
+  --glass-fill-strong: color-mix(in oklab, oklch(0.2 0.024 259) 82%, transparent);
+  --glass-fill-thin: color-mix(in oklab, oklch(0.2 0.024 259) 35%, transparent);
   --glass-filter: blur(24px) saturate(1.6);
   --glass-edge:
-    inset 0 0.5px 0 rgba(255,255,255,0.08),
-    0 0 0 1px rgba(255,255,255,0.05);
+    inset 0 0.5px 0 oklch(1 0 0 / 8%),
+    0 0 0 1px oklch(1 0 0 / 5%);
   --glass-edge-hover:
-    inset 0 0.5px 0 rgba(255,255,255,0.14),
-    0 0 0 1px rgba(255,255,255,0.1);
+    inset 0 0.5px 0 oklch(1 0 0 / 14%),
+    0 0 0 1px oklch(1 0 0 / 10%);
+
+  /* Blueprint grid + bloom strength, tuned for the dark canvas */
+  --grid-line: oklch(1 0 0 / 3.5%);
+  --bloom-strength: 30%;
+  --bloom-strength-soft: 18%;
+
+  /* Per-surface signature hue. Pages may override ONLY --signature-h; the
+     lightness and chroma stay on brand and re-tune per theme, so a page can
+     shift hue without leaving the design system. Keep hues in the 150–290
+     band (green -> teal -> blue -> indigo). */
+  --signature-h: 259;
+  --signature-l: 0.76;
+  --signature-c: 0.15;
+  --color-signature: oklch(var(--signature-l) var(--signature-c) var(--signature-h));
 
   /* Radius */
   --radius-xs: 4px;
@@ -86,71 +132,108 @@
   --duration-fast: 150ms;
   --duration-normal: 200ms;
   --duration-slow: 300ms;
+
+  /* Marketing layout rhythm */
+  --site-header-height: 4.5rem;
+  --marketing-section-y: 6rem;
+  --marketing-section-y-lg: 8rem;
 }
 
 /* ── Light theme ── */
 html.light {
-  --color-bg: #F7F8FA;
-  --color-surface: #FFFFFF;
-  --color-elevated: #F0F1F3;
-  --color-subtle-surface: #E8E9EC;
-  --color-fg: #111318;
-  --color-muted: #64666D;
-  --color-subtle: #9B9DA3;
-  --color-accent: #4A5AE8;
-  --color-accent-soft: #4A5AE810;
-  --color-accent-fg: #FFFFFF;
-  --color-primary: #111318;
-  --color-primary-fg: #F7F8FA;
-  --color-border: #E5E7EB;
-  --color-border-strong: #D1D5DB;
-  --color-positive: #059669;
-  --color-positive-soft: #0596690d;
-  --color-warning: #D97706;
-  --color-warning-soft: #D977060d;
-  --color-danger: #DC2626;
-  --color-danger-soft: #DC26260d;
-  --color-chart-1: #4A5AE8;
-  --color-chart-2: #059669;
-  --color-chart-3: #7C3AED;
-  --color-chart-4: #D97706;
-  --color-chart-5: #DB2777;
-  --color-chart-6: #0891B2;
-  --color-ring: #4A5AE8;
-  --color-ocean: #DDE2E8;
-  --color-map-empty: #E8ECF0;
-  --color-map-1: #C0D0E0;
-  --color-map-2: #9BBAD4;
-  --color-map-3: #78A4C6;
-  --color-map-4: #558EBA;
-  --color-map-5: #3A78A8;
-  --color-map-6: #236290;
-  --color-map-7: #164C74;
-  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
-  --shadow-border:
-    0 0 0 1px rgba(0,0,0,0.06),
-    0 1px 2px rgba(0,0,0,0.04);
-  --shadow-border-hover:
-    0 0 0 1px rgba(0,0,0,0.1),
-    0 2px 8px rgba(0,0,0,0.06);
-  --glass-fill: color-mix(in oklab, #FFFFFF 65%, transparent);
-  --glass-fill-strong: color-mix(in oklab, #FFFFFF 88%, transparent);
-  --glass-fill-thin: color-mix(in oklab, #FFFFFF 45%, transparent);
+  color-scheme: light;
+
+  --color-bg: oklch(0.988 0.004 250);
+  --color-surface: oklch(1 0 0);
+  --color-surface-raised: oklch(0.972 0.006 250);
+  --color-elevated: oklch(0.972 0.006 250);
+  --color-subtle-surface: oklch(0.94 0.012 250);
+
+  --color-fg: oklch(0.21 0.03 259);
+  --color-muted: oklch(0.5 0.025 258);
+  --color-subtle: oklch(0.62 0.022 258);
+
+  --color-accent: oklch(0.62 0.19 259);
+  --color-accent-fg: oklch(0.99 0.003 250);
+  --color-accent-glow: oklch(0.7 0.16 259);
+  --color-accent-soft: color-mix(in oklab, oklch(0.62 0.19 259) 10%, transparent);
+
+  --color-brand: oklch(0.6 0.15 150);
+  --color-brand-fg: oklch(0.99 0.003 150);
+  --color-brand-deep: oklch(0.52 0.13 150);
+  --color-brand-soft: color-mix(in oklab, oklch(0.6 0.15 150) 10%, transparent);
+
+  --color-primary: oklch(0.21 0.03 259);
+  --color-primary-fg: oklch(0.988 0.004 250);
+
+  --color-border: oklch(0.21 0.03 259 / 12%);
+  --color-border-strong: oklch(0.21 0.03 259 / 22%);
+  --color-hairline: oklch(0.21 0.03 259 / 11%);
+  --color-ring: oklch(0.62 0.19 259 / 45%);
+
+  --color-positive: oklch(0.6 0.15 150);
+  --color-positive-soft: color-mix(in oklab, oklch(0.6 0.15 150) 10%, transparent);
+  --color-warning: oklch(0.75 0.15 75);
+  --color-warning-soft: color-mix(in oklab, oklch(0.75 0.15 75) 12%, transparent);
+  --color-danger: oklch(0.58 0.21 25);
+  --color-danger-soft: color-mix(in oklab, oklch(0.58 0.21 25) 10%, transparent);
+
+  --color-chart-1: oklch(0.62 0.19 259);
+  --color-chart-2: oklch(0.6 0.15 150);
+  --color-chart-3: oklch(0.66 0.14 215);
+  --color-chart-4: oklch(0.7 0.15 135);
+  --color-chart-5: oklch(0.58 0.16 285);
+  --color-chart-6: oklch(0.62 0.12 195);
+
+  --color-ocean: oklch(0.93 0.008 250);
+  --color-map-empty: oklch(0.95 0.006 250);
+  --color-map-1: oklch(0.88 0.03 255);
+  --color-map-2: oklch(0.82 0.055 257);
+  --color-map-3: oklch(0.76 0.08 258);
+  --color-map-4: oklch(0.7 0.105 259);
+  --color-map-5: oklch(0.64 0.135 259);
+  --color-map-6: oklch(0.56 0.16 260);
+  --color-map-7: oklch(0.47 0.15 261);
+
+  --shadow-xs: 0 1px 2px oklch(0 0 0 / 4%);
+  --shadow-sm: 0 1px 3px oklch(0 0 0 / 6%), 0 1px 2px oklch(0 0 0 / 4%);
+  --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 6%), 0 2px 4px -2px oklch(0 0 0 / 4%);
+  --shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 8%), 0 4px 6px -4px oklch(0 0 0 / 4%);
+  --shadow-border: 0 0 0 1px oklch(0 0 0 / 6%), 0 1px 2px oklch(0 0 0 / 4%);
+  --shadow-border-hover: 0 0 0 1px oklch(0 0 0 / 10%), 0 2px 8px oklch(0 0 0 / 6%);
+
+  --glass-fill: color-mix(in oklab, oklch(1 0 0) 65%, transparent);
+  --glass-fill-strong: color-mix(in oklab, oklch(1 0 0) 88%, transparent);
+  --glass-fill-thin: color-mix(in oklab, oklch(1 0 0) 45%, transparent);
   --glass-filter: blur(20px) saturate(1.4);
   --glass-edge:
-    inset 0 0.5px 0 rgba(255,255,255,0.8),
-    0 0 0 1px rgba(0,0,0,0.06),
-    0 4px 16px rgba(0,0,0,0.04);
+    inset 0 0.5px 0 oklch(1 0 0 / 80%),
+    0 0 0 1px oklch(0 0 0 / 6%),
+    0 4px 16px oklch(0 0 0 / 4%);
   --glass-edge-hover:
-    inset 0 0.5px 0 rgba(255,255,255,0.9),
-    0 0 0 1px rgba(0,0,0,0.1),
-    0 8px 24px rgba(0,0,0,0.06);
+    inset 0 0.5px 0 oklch(1 0 0 / 90%),
+    0 0 0 1px oklch(0 0 0 / 10%),
+    0 8px 24px oklch(0 0 0 / 6%);
+
+  --grid-line: oklch(0.21 0.03 259 / 4.5%);
+  --bloom-strength: 22%;
+  --bloom-strength-soft: 14%;
+
+  /* Signature drops and saturates on the light canvas. */
+  --signature-l: 0.62;
+  --signature-c: 0.17;
 }
 
-/* ── Base ── */
+@media (min-width: 768px) {
+  :root {
+    --site-header-height: 4.75rem;
+  }
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -159,9 +242,11 @@ html.light {
     background-color: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings: "rlig" 1, "calt" 1, "tnum" 1;
   }
   body {
     background-color: var(--color-bg);
@@ -179,16 +264,148 @@ html.light {
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  ::selection {
+    background: color-mix(in oklab, var(--color-accent) 26%, transparent);
+  }
   :focus-visible {
     outline: 2px solid var(--color-ring);
     outline-offset: 2px;
   }
 }
 
-/* ── Components ── */
+/* ==========================================================================
+   Signature utilities — the background patterns that carry the brand
+   ========================================================================== */
+
+/* 64px graph paper behind a whole page or pillar section */
+@utility blueprint-grid {
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Denser 32px rule sheet for technical/audit layouts */
+@utility rule-sheet {
+  background-image: linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 100% 32px;
+}
+
+/* Dot field — the quietest of the three grounds, for dense data pages */
+@utility dot-field {
+  background-image: radial-gradient(var(--grid-line) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* The brand glow: blue core fading through green. Slowly breathes. */
+@utility bloom {
+  background: radial-gradient(
+    60% 60% at 50% 40%,
+    color-mix(in oklab, var(--color-accent) var(--bloom-strength), transparent) 0%,
+    color-mix(in oklab, var(--color-brand) calc(var(--bloom-strength) / 2), transparent) 42%,
+    transparent 72%
+  );
+  filter: blur(40px);
+  animation: bloom-pulse 8s ease-in-out infinite;
+}
+
+@utility bloom-soft {
+  background: radial-gradient(
+    55% 55% at 50% 50%,
+    color-mix(in oklab, var(--color-accent) var(--bloom-strength-soft), transparent) 0%,
+    color-mix(in oklab, var(--color-brand) calc(var(--bloom-strength-soft) / 2), transparent) 45%,
+    transparent 70%
+  );
+  filter: blur(48px);
+}
+
+/* Same glow tinted by the surface's signature hue instead of the fixed blue
+   core, so a property or section can own its light without leaving the brand. */
+@utility bloom-signature {
+  background: radial-gradient(
+    60% 60% at 50% 40%,
+    color-mix(in oklab, var(--color-signature) var(--bloom-strength), transparent) 0%,
+    color-mix(in oklab, var(--color-brand) calc(var(--bloom-strength) / 2), transparent) 45%,
+    transparent 72%
+  );
+  filter: blur(40px);
+  animation: bloom-pulse 8s ease-in-out infinite;
+}
+
+@keyframes bloom-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+@utility hairline-t {
+  border-top: 1px solid var(--color-hairline);
+}
+
+@utility hairline-b {
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+/* Product-frame halo: the coloured glow around browser/phone mockups */
+@utility frame-halo {
+  box-shadow:
+    0 0 60px -16px color-mix(in oklab, var(--color-accent) 40%, transparent),
+    0 28px 60px -28px oklch(0 0 0 / 28%);
+}
+
+@utility gradient-text {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-brand) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@utility gradient-primary {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-brand) 100%);
+}
+
+/* Editorial entrance. CSS-only and `both`-filled so it paints without JS. */
+@utility rise-in {
+  animation: rise-in-editorial 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes rise-in-editorial {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The hairline mesh: a grid whose 1px gaps expose the hairline background, so
+   cells are divided by rules without any borders on the cells themselves.
+   Children should carry `bg-surface`. */
+@utility mesh-grid {
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid var(--color-hairline);
+  background: var(--color-hairline);
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Components
+   ========================================================================== */
+
 @layer components {
 
-  /* Typography utilities */
+  /* ── Typography scale ── */
   .heading-xl {
     font-size: 2.25rem; /* 36px */
     font-weight: 600;
@@ -220,14 +437,11 @@ html.light {
   .label {
     font-size: 0.8125rem; /* 13px */
     font-weight: 500;
-    letter-spacing: 0;
     line-height: 1.4;
     color: var(--color-muted);
   }
   .caption {
     font-size: 0.75rem; /* 12px */
-    font-weight: 400;
-    letter-spacing: 0;
     line-height: 1.5;
     color: var(--color-subtle);
   }
@@ -238,6 +452,18 @@ html.light {
     font-weight: 500;
     color: var(--color-subtle);
   }
+  /* Editorial eyebrow — green, wide-tracked. The marketing counterpart to
+     .kicker, which stays grey for in-product metadata. */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.6875rem; /* 11px */
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--color-brand);
+  }
   .stat-value {
     font-family: var(--font-sans);
     font-weight: 600;
@@ -247,7 +473,7 @@ html.light {
     color: var(--color-fg);
   }
 
-  /* Page structure */
+  /* ── Page structure ── */
   .page-head {
     padding: 1.5rem 1.5rem 1.25rem;
     border-bottom: 1px solid var(--color-border);
@@ -267,7 +493,64 @@ html.light {
     color: var(--color-muted);
   }
 
-  /* Map */
+  /* ── Pillar header ──
+     The editorial page-opener ported from the marketing site: blueprint
+     ground, a bloom overhead, eyebrow, oversized display title. Used by
+     <PillarHeader>; see that component for the markup contract. */
+  .pillar-shell {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  /* Product pages cap at 36px — the brief's desktop page-title scale. The
+     marketing modifier below is what goes oversized. */
+  .pillar-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.625rem, 1.15rem + 1.6vw, 2.25rem);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    color: var(--color-fg);
+  }
+  .pillar-title--marketing {
+    font-size: clamp(2.25rem, 1.2rem + 4.6vw, 3.75rem);
+  }
+  .pillar-dek {
+    margin-top: 0.875rem;
+    max-width: 42rem;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--color-muted);
+  }
+  .pillar-meta {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--color-muted);
+  }
+  /* The KPI strip under a pillar header. Hairline-separated columns rather
+     than a row of cards — the master brief's "subtle separators, not giant
+     cards". Falls back to stacked rows under 640px. */
+  .pillar-kpis {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--color-hairline);
+    border-top: 1px solid var(--color-hairline);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+  @media (min-width: 640px) {
+    .pillar-kpis {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .pillar-kpi {
+    background: var(--color-bg);
+    padding: 0.875rem 1rem;
+  }
+
+  /* ── Map ── */
   .map-country {
     stroke: var(--color-bg);
     stroke-width: 0.45px;
@@ -291,22 +574,25 @@ html.light {
     stroke-width: 0.4px;
   }
 
-  /* Metric cards */
+  /* ── Metric cards ── */
   .metric-card {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
     padding: 1rem 1.25rem;
     background: var(--color-surface);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-hairline);
     border-radius: var(--radius-lg);
-    transition: box-shadow var(--duration-normal) var(--ease-out-soft);
+    transition:
+      border-color var(--duration-normal) var(--ease-out-soft),
+      box-shadow var(--duration-normal) var(--ease-out-soft);
   }
   .metric-card:hover {
+    border-color: color-mix(in oklab, var(--color-brand) 32%, transparent);
     box-shadow: var(--shadow-border-hover);
   }
 
-  /* Status badges */
+  /* ── Status badges ── */
   .status-badge {
     display: inline-flex;
     align-items: center;
@@ -338,7 +624,7 @@ html.light {
     color: var(--color-accent);
   }
 
-  /* Glass (overlays, mobile nav, sheets, AI composer ONLY) */
+  /* ── Glass (overlays, mobile nav, sheets, AI composer ONLY) ── */
   .glass,
   .glass-thin,
   .glass-strong,
@@ -350,17 +636,10 @@ html.light {
     -webkit-backdrop-filter: var(--glass-filter);
     box-shadow: var(--glass-edge);
   }
-  .glass-thin {
-    background: var(--glass-fill-thin);
-  }
-  .glass-strong {
-    background: var(--glass-fill-strong);
-  }
-  .glass-pill {
-    border-radius: 9999px;
-  }
+  .glass-thin { background: var(--glass-fill-thin); }
+  .glass-strong { background: var(--glass-fill-strong); }
+  .glass-pill { border-radius: 9999px; }
 
-  /* HUD panel (globe overlay) */
   .hud-panel {
     position: relative;
     isolation: isolate;
@@ -371,7 +650,7 @@ html.light {
     box-shadow: var(--glass-edge);
   }
 
-  /* Subtle noise texture for glass elements */
+  /* Subtle noise texture keeps glass from reading as flat plastic */
   .glass::after,
   .glass-thin::after,
   .glass-strong::after,
@@ -386,14 +665,14 @@ html.light {
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.55'/></svg>");
   }
 
-  /* Segmented control */
+  /* ── Segmented control ── */
   .seg {
     display: inline-flex;
     align-items: center;
     border-radius: 9999px;
     background: var(--color-subtle-surface);
     padding: 0.125rem;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-hairline);
   }
   .chip {
     height: 1.75rem;
@@ -402,7 +681,9 @@ html.light {
     font-size: 0.8125rem;
     font-weight: 500;
     color: var(--color-muted);
-    transition: color var(--duration-fast) var(--ease-out-soft), background var(--duration-fast) var(--ease-out-soft);
+    transition:
+      color var(--duration-fast) var(--ease-out-soft),
+      background var(--duration-fast) var(--ease-out-soft);
   }
   .chip.is-on {
     background: var(--color-surface);
@@ -410,10 +691,8 @@ html.light {
     box-shadow: var(--shadow-sm);
   }
 
-  /* Active nav rail indicator */
-  .rail {
-    position: relative;
-  }
+  /* ── Active nav rail indicator ── */
+  .rail { position: relative; }
   .rail.is-on::before {
     content: "";
     position: absolute;
@@ -426,12 +705,10 @@ html.light {
     border-radius: 99px;
   }
 
-  /* Globe vignette */
   .globe-vignette {
     background: radial-gradient(ellipse at center, transparent 42%, var(--color-ocean) 100%);
   }
 
-  /* Cross overlay */
   .meridian-cross {
     background:
       linear-gradient(var(--color-fg), var(--color-fg)) center / 1px 28% no-repeat,
@@ -439,42 +716,36 @@ html.light {
     opacity: 0.08;
   }
 
-  /* Scrollbar */
+  /* ── Scrollbars ── */
   .thin-scroll {
     scrollbar-width: thin;
     scrollbar-color: var(--color-border-strong) transparent;
   }
-  .thin-scroll::-webkit-scrollbar {
-    height: 6px;
-    width: 6px;
-  }
+  .thin-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
   .thin-scroll::-webkit-scrollbar-thumb {
     background: var(--color-border-strong);
     border-radius: 99px;
   }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  /* Scroll fade mask */
   .scroll-fade {
     mask-image: linear-gradient(#000, #000 88%, transparent);
   }
 
-  /* HUD stat text glow */
   .hud-stat {
     text-shadow: 0 2px 28px var(--color-ocean);
   }
 
-  /* Delta indicators */
-  .delta-positive {
-    color: var(--color-positive);
-  }
-  .delta-negative {
-    color: var(--color-danger);
-  }
-  .delta-neutral {
-    color: var(--color-muted);
-  }
+  /* ── Delta indicators ── */
+  .delta-positive { color: var(--color-positive); }
+  .delta-negative { color: var(--color-danger); }
+  .delta-neutral { color: var(--color-muted); }
 
-  /* Data table */
+  /* ── Data table ── */
   .data-table {
     width: 100%;
     border-collapse: collapse;
@@ -508,21 +779,46 @@ html.light {
     font-variant-numeric: tabular-nums;
   }
 
-  /* Marketing-specific */
+  /* ── Marketing ── */
   .marketing-section {
-    padding: 6rem 1.5rem;
+    padding: var(--marketing-section-y) 1.5rem;
   }
   @media (min-width: 768px) {
     .marketing-section {
-      padding: 8rem 2rem;
+      padding: var(--marketing-section-y-lg) 2rem;
     }
   }
   .marketing-container {
     max-width: 1200px;
     margin: 0 auto;
   }
+  .main-below-header {
+    padding-top: calc(var(--site-header-height) + 1.5rem);
+  }
+  .hero-below-header {
+    padding-top: calc(var(--site-header-height) + 1.5rem);
+  }
+  @media (min-width: 768px) {
+    .hero-below-header {
+      padding-top: calc(var(--site-header-height) + 3rem);
+    }
+  }
 
-  /* Mobile glass nav dock */
+  /* Marketing surfaces: hairline panels, restrained hover */
+  .panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-hairline);
+    border-radius: 10px;
+    transition:
+      border-color var(--duration-normal) var(--ease-out-soft),
+      transform var(--duration-normal) var(--ease-out-soft);
+  }
+  .panel-interactive:hover {
+    border-color: color-mix(in oklab, var(--color-brand) 35%, transparent);
+    transform: translateY(-2px);
+  }
+
+  /* ── Mobile glass nav dock ── */
   @media (max-width: 767px) {
     .mobile-dock {
       position: fixed;
@@ -535,23 +831,30 @@ html.light {
       backdrop-filter: var(--glass-filter);
       -webkit-backdrop-filter: var(--glass-filter);
       box-shadow: var(--glass-edge);
-      border-top: 0.5px solid rgba(255,255,255,0.06);
+      border-top: 0.5px solid var(--color-hairline);
     }
   }
 }
 
-/* Light-mode overrides for specific components */
+/* ── Light-mode component tuning ── */
 html.light .globe-vignette {
-  background: radial-gradient(ellipse at center, transparent 48%, #dde2e8 100%);
+  background: radial-gradient(ellipse at center, transparent 48%, var(--color-ocean) 100%);
 }
-html.light .meridian-cross {
-  opacity: 0.06;
+html.light .meridian-cross { opacity: 0.06; }
+
+/* ── Native scrollbar chrome ── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--color-surface-raised); }
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-fg) 20%, transparent);
+  border-radius: 999px;
+  border: 2px solid var(--color-surface-raised);
 }
-html.light .mobile-dock {
-  border-top-color: rgba(0,0,0,0.08);
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-accent) 60%, transparent);
 }
 
-/* Reduced transparency fallback */
+/* ── Reduced transparency fallback ── */
 @media (prefers-reduced-transparency: reduce) {
   .glass,
   .glass-thin,
@@ -566,26 +869,29 @@ html.light .mobile-dock {
   }
 }
 
-/* Reduced motion */
+/* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
-  .map-country {
-    transition: none;
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+  .map-country { transition: none; }
   .stagger-in {
     animation: none !important;
     opacity: 1 !important;
     filter: none !important;
     transform: none !important;
   }
-  .visitor-pin {
-    animation: none;
-  }
-  .live-dot {
-    animation: none;
-  }
 }
 
-/* ── Keyframes ── */
+/* ==========================================================================
+   Keyframes
+   ========================================================================== */
+
+/* In-product stagger — shorter and tighter than the editorial `rise-in`,
+   because it fires on dozens of cards at once. */
 @keyframes rise-in {
   from {
     opacity: 0;
@@ -614,17 +920,13 @@ html.light .mobile-dock {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
 }
-.visitor-pin {
-  animation: visitor-bob 2.6s ease-in-out infinite;
-}
+.visitor-pin { animation: visitor-bob 2.6s ease-in-out infinite; }
 
 @keyframes live-breathe {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.45; transform: scale(0.85); }
 }
-.live-dot {
-  animation: live-breathe 1.8s ease-in-out infinite;
-}
+.live-dot { animation: live-breathe 1.8s ease-in-out infinite; }
 
 @keyframes shimmer {
   from { transform: translateX(-100%); }
@@ -640,21 +942,11 @@ html.light .mobile-dock {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255,255,255,0.04),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 4%), transparent);
   animation: shimmer 1.5s infinite;
 }
 html.light .skeleton::after {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255,255,255,0.6),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 60%), transparent);
 }
 
 @keyframes fade-in {
@@ -672,7 +964,7 @@ html.light .skeleton::after {
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* Display stat (kept for backward compat with globe HUD) */
+/* Display stat (globe HUD) */
 .display-stat {
   font-weight: 600;
   letter-spacing: -0.03em;

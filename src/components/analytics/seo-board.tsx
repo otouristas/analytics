@@ -6,6 +6,8 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { OpportunityCardV2, type OpportunityItem } from "@/components/ui/opportunity-card-v2";
 import { useRealtime } from "@/lib/analytics/use-live-feed";
+import { useDefaultProject } from "@/lib/supabase/hooks";
+import { useLiveQueries, useSearchKpis } from "@/lib/supabase/live-data";
 import { cn } from "@/lib/utils";
 
 export interface GscRecord {
@@ -16,10 +18,13 @@ export interface GscRecord {
   impressions: number;
   ctr: number;
   position: number;
-  qualifiedSessions: number;
-  conversions: number;
-  value: number;
+  /** Meridian tracker metrics. Absent on rows sourced from Search Console. */
+  qualifiedSessions?: number;
+  conversions?: number;
+  value?: number;
   opportunity: "High" | "Medium" | "Low";
+  /** True when the row came from live Search Console data. */
+  isLive?: boolean;
 }
 
 const SEED_QUERIES: GscRecord[] = [
@@ -105,15 +110,37 @@ const SEED_QUERIES: GscRecord[] = [
 
 export function SeoBoard() {
   const { project } = useRealtime();
-  const [data, setData] = useState<GscRecord[]>(SEED_QUERIES);
+  const [uploaded, setUploaded] = useState<GscRecord[] | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "queries" | "pages" | "opportunities">("overview");
+
+  // Live Search Console data for the signed-in user's property, when there is
+  // one. A CSV the user just uploaded outranks it — that is an explicit act —
+  // and the demo seed is the last resort so the board is never empty.
+  const liveProject = useDefaultProject();
+  const { records: liveRecords } = useLiveQueries(liveProject?.id, 28, 50);
+  const { kpis: liveKpis } = useSearchKpis(liveProject?.id, 28);
+
+  const data: GscRecord[] = uploaded ?? liveRecords ?? SEED_QUERIES;
+  const isLive = !uploaded && Boolean(liveRecords?.length);
+  const setData = setUploaded;
 
   const totalClicks = useMemo(() => data.reduce((s, r) => s + r.clicks, 0), [data]);
   const totalImpressions = useMemo(() => data.reduce((s, r) => s + r.impressions, 0), [data]);
-  const avgPosition = useMemo(() => (data.reduce((s, r) => s + r.position, 0) / data.length).toFixed(1), [data]);
+  const avgPosition = useMemo(
+    () => (data.length ? data.reduce((s, r) => s + r.position, 0) / data.length : 0).toFixed(1),
+    [data],
+  );
   const avgCtr = useMemo(() => ((totalClicks / Math.max(1, totalImpressions)) * 100).toFixed(1), [totalClicks, totalImpressions]);
-  const totalQualified = useMemo(() => data.reduce((s, r) => s + r.qualifiedSessions, 0), [data]);
-  const totalRevenue = useMemo(() => data.reduce((s, r) => s + r.value, 0), [data]);
+  // Tracker-only totals are meaningless once the rows come from Search Console,
+  // which carries no session or revenue data. Undefined -> the cards render "—".
+  const totalQualified = useMemo(
+    () => (isLive ? undefined : data.reduce((s, r) => s + (r.qualifiedSessions ?? 0), 0)),
+    [data, isLive],
+  );
+  const totalRevenue = useMemo(
+    () => (isLive ? undefined : data.reduce((s, r) => s + (r.value ?? 0), 0)),
+    [data, isLive],
+  );
 
   const columns: Column<GscRecord>[] = [
     {
@@ -173,7 +200,12 @@ export function SeoBoard() {
       id: "qualified",
       header: "Qualified Sessions",
       accessor: (r) => r.qualifiedSessions,
-      cell: (val) => <span className="font-semibold text-positive">{Number(val).toLocaleString()}</span>,
+      cell: (val) =>
+        val === undefined || val === null ? (
+          <span className="text-subtle">—</span>
+        ) : (
+          <span className="font-semibold text-positive">{Number(val).toLocaleString()}</span>
+        ),
       sortable: true,
       align: "right",
     },
@@ -181,7 +213,12 @@ export function SeoBoard() {
       id: "revenue",
       header: "Organic Revenue",
       accessor: (r) => r.value,
-      cell: (val) => <span className="font-semibold text-fg font-mono">€{Number(val).toLocaleString()}</span>,
+      cell: (val) =>
+        val === undefined || val === null ? (
+          <span className="text-subtle">—</span>
+        ) : (
+          <span className="font-mono font-semibold text-fg">€{Number(val).toLocaleString()}</span>
+        ),
       sortable: true,
       align: "right",
     },
@@ -242,14 +279,23 @@ export function SeoBoard() {
     <div className="flex-1 overflow-y-auto pb-16">
       {/* 1. Property Header */}
       <PropertyHeader
+        eyebrow={isLive ? "Live Search Console" : "Demo data"}
         title="Search Intelligence & Outcomes"
-        subtitle="Google Search Console joined with downstream conversions and revenue"
-        kpis={[
-          { label: "Search Clicks", value: totalClicks.toLocaleString(), delta: "+18.2%", positive: true },
-          { label: "Search Impressions", value: totalImpressions.toLocaleString(), delta: "+9.4%", positive: true },
-          { label: "Avg CTR", value: `${avgCtr}%`, delta: "+0.3%", positive: true },
-          { label: "Avg Position", value: `#${avgPosition}`, delta: "-0.2", positive: true },
-        ]}
+        subtitle={
+          isLive
+            ? `Google Search Console, last 28 days${liveProject ? ` · ${liveProject.domain}` : ""}`
+            : "Google Search Console joined with downstream conversions and revenue"
+        }
+        kpis={
+          // Live KPIs carry real period-over-period deltas; the seed's are
+          // illustrative, so they are only shown alongside the seed.
+          liveKpis ?? [
+            { label: "Search Clicks", value: totalClicks.toLocaleString(), delta: "+18.2%", positive: true },
+            { label: "Search Impressions", value: totalImpressions.toLocaleString(), delta: "+9.4%", positive: true },
+            { label: "Avg CTR", value: `${avgCtr}%`, delta: "+0.3%", positive: true },
+            { label: "Avg Position", value: `#${avgPosition}`, delta: "-0.2", positive: true },
+          ]
+        }
         actions={
           <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-accent/90 transition-all">
             <Upload className="size-3.5" />
@@ -262,17 +308,36 @@ export function SeoBoard() {
       <div className="p-4 sm:p-6 space-y-6">
         {/* 2. Additional Organic Value Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Both metrics come from Meridian's own tracker, not Search Console.
+              On live data there is nothing to show, so they say so instead of
+              printing a derived number that would read as measured. */}
           <MetricCard
             label="Organic Qualified Sessions"
-            value={totalQualified.toLocaleString()}
-            delta={{ value: "+21.4%", trend: "up", label: "of total search entrances" }}
-            subtitle="Demonstrated commercial or booking intent"
+            value={totalQualified === undefined ? "—" : totalQualified.toLocaleString()}
+            delta={
+              totalQualified === undefined
+                ? undefined
+                : { value: "+21.4%", trend: "up", label: "of total search entrances" }
+            }
+            subtitle={
+              totalQualified === undefined
+                ? "Connect the Meridian tracker to measure intent"
+                : "Demonstrated commercial or booking intent"
+            }
           />
           <MetricCard
             label="Organic Verified Revenue"
-            value={`€${totalRevenue.toLocaleString()}`}
-            delta={{ value: "+14.8%", trend: "up", label: "attributed to search" }}
-            subtitle="Confirmed downstream purchases"
+            value={totalRevenue === undefined ? "—" : `€${totalRevenue.toLocaleString()}`}
+            delta={
+              totalRevenue === undefined
+                ? undefined
+                : { value: "+14.8%", trend: "up", label: "attributed to search" }
+            }
+            subtitle={
+              totalRevenue === undefined
+                ? "Connect the Meridian tracker to attribute revenue"
+                : "Confirmed downstream purchases"
+            }
           />
         </div>
 

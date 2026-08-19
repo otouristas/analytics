@@ -12,6 +12,7 @@ import { compareHalves, coreMetrics, minuteSeries, trackingHealth } from "@/lib/
 import { formatDwellShort, formatPct } from "@/lib/analytics/visitor-name";
 import { useAnalytics } from "@/lib/analytics/store";
 import { useRealtime } from "@/lib/analytics/use-live-feed";
+import { useDefaultProject, useLatestSyncRun } from "@/lib/supabase/hooks";
 import { cn } from "@/lib/utils";
 
 export function OverviewBoard() {
@@ -60,11 +61,31 @@ export function OverviewBoard() {
 
   const [activeMetric, setActiveMetric] = useState("sessions");
 
+  // Search Console sync health. The KPIs above stay on Meridian's own tracker —
+  // GSC has no sessions, goals or revenue — but whether search data is flowing
+  // belongs on the overview, because a stale sync silently flattens the SEO
+  // pages downstream.
+  const liveProject = useDefaultProject();
+  const { data: syncRun } = useLatestSyncRun(liveProject?.id);
+
   return (
     <div className="flex-1 overflow-y-auto pb-16">
       {/* 1. Reusable Property Header */}
       <PropertyHeader
         title={project.name}
+        badges={
+          syncRun ? (
+            <StatusBadge
+              status={syncRun.state === "error" || syncRun.error ? "critical" : "connected"}
+              size="sm"
+              label={
+                syncRun.error
+                  ? "Search Console sync failed"
+                  : `Synced ${new Date(syncRun.finished_at ?? syncRun.started_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`
+              }
+            />
+          ) : undefined
+        }
         kpis={[
           { label: "Visitors", value: String(core.visitors || 128429), delta: "+14.3%", positive: true },
           { label: "Qualified Rate", value: formatPct(core.qualifiedRate || 0.256), delta: "+21.8%", positive: true },

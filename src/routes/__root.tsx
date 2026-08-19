@@ -22,7 +22,7 @@ export const Route = createRootRoute({
       { name: "apple-mobile-web-app-title", content: APP_NAME },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "theme-color", content: "#0D0F12" },
+      { name: "theme-color", content: "#16191F" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
       ...(ogImage

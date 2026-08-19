@@ -1,24 +1,27 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, TrendingUp, ShieldCheck, CheckCircle2, ArrowUpRight } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Bloom } from "@/components/ui/primitives";
 
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-28">
-      {/* Background coordinate grid lines */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.06] meridian-cross" />
+      {/* The hero light: the brand gradient rendered as a blue-to-green radial,
+          breathing on an 8s cycle. It sits above the page's blueprint grid. */}
+      <Bloom className="left-1/2 top-[-6rem] h-[32rem] w-[64rem] -translate-x-1/2" />
+      <div className="pointer-events-none absolute inset-0 meridian-cross opacity-[0.03]" />
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6 text-center">
         {/* Eyebrow badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted shadow-xs mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <span className="flex size-2 rounded-full bg-accent" />
+        <div className="relative mb-6 inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-3 py-1 text-xs font-medium text-muted">
+          <span className="flex size-2 rounded-full bg-brand" />
           <span className="text-fg font-semibold">Meridian Intelligence 2.0</span>
           <span className="text-subtle">·</span>
           <span>Analytics that explains what matters</span>
         </div>
 
         {/* Hero headline */}
-        <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-fg text-balance leading-[1.08]">
+        <h1 className="rise-in relative text-balance font-display text-4xl font-medium leading-[1.05] tracking-[-0.04em] text-fg sm:text-6xl">
           Your analytics should tell you <span className="text-accent">what to do next</span>.
         </h1>
 
@@ -53,11 +56,10 @@ export function HeroSection() {
 
         {/* Floating Product Hero Visual */}
         <div className="relative mt-14 sm:mt-20">
-          {/* Subtle glow backdrop */}
-          <div className="absolute -inset-1 rounded-2xl bg-gradient-to-b from-accent/20 to-transparent opacity-50 blur-xl pointer-events-none" />
-
-          {/* Master floating window */}
-          <div className="relative rounded-2xl border border-border bg-surface p-3 sm:p-5 text-left shadow-2xl overflow-hidden">
+          {/* Master floating window. `frame-halo` is the product-frame glow the
+              design system reserves for mockups — a coloured halo plus a real
+              drop shadow, rather than a blurred gradient rectangle. */}
+          <div className="frame-halo relative overflow-hidden rounded-2xl border border-hairline bg-surface p-3 text-left sm:p-5">
             {/* Top window bar */}
             <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
               <div className="flex items-center gap-2">

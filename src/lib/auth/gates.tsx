@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Navigate } from "@tanstack/react-router";
-import { authEnabled, signOut } from "./client";
+import { authEnabled } from "./client";
+import { signOutSupabase } from "@/lib/supabase/auth";
 import { useCurrentUser, useCurrentUserState } from "./use-current-user";
 
 /**
@@ -70,7 +71,7 @@ export function UserButton() {
       {authEnabled && (
         <button
           type="button"
-          onClick={() => void signOut()}
+          onClick={() => void signOutSupabase()}
           className="cursor-pointer text-sm underline-offset-4 opacity-70 hover:underline"
         >
           Sign out

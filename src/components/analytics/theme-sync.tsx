@@ -6,7 +6,7 @@ function applyTheme(theme: "dark" | "light") {
   window.localStorage.setItem("meridian-theme", theme);
   document.querySelector('meta[name="theme-color"]')?.setAttribute(
     "content",
-    theme === "light" ? "#efece4" : "#070809",
+    theme === "light" ? "#FAFBFC" : "#16191F",
   );
 }
 

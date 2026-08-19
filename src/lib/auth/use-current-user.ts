@@ -1,4 +1,5 @@
-import { authClient, authEnabled } from "./client";
+import { authEnabled } from "./client";
+import { useSupabaseAuth } from "@/lib/supabase/auth";
 
 /** Normalized user shape used across the app, auth on or off. */
 export type AppUser = {
@@ -12,10 +13,9 @@ export type AppUser = {
 
 /**
  * Stable fallback user, used ONLY when auth is explicitly disabled
- * (`VITE_AUTH_ENABLED=false`). By default auth is on — the sandbox live preview
- * does real sign-in via the baked preview client. Its id is
- * `"dev-user"` — the SAME id `verify.server.ts` returns server-side — so per-user
- * rows written in that mode belong to one consistent owner.
+ * (`VITE_AUTH_ENABLED=false`). Useful for design work on the product shell
+ * without a live session — but note that Supabase returns no rows for it, so
+ * boards fall back to their mock data in that mode.
  */
 export const DEV_USER: AppUser = {
   id: "dev-user",
@@ -34,12 +34,12 @@ export type CurrentUserState = {
 };
 
 /**
- * Current user + loading state. Same behavior in live preview and when deployed:
- *   - Auth enabled (default) -> the real signed-in user; `user` is `null` while
- *                            the session resolves (`isPending: true`) and when
- *                            signed out (`isPending: false`). Session comes from
- *                            Better Auth `useSession()` → `/api/auth/get-session`
- *                            (cookie when deployed; bearer in live preview).
+ * Current user + loading state, backed by Supabase Auth.
+ *
+ *   - Auth enabled (default) -> the real signed-in Supabase user; `user` is
+ *                            `null` while the session resolves
+ *                            (`isPending: true`) and when signed out
+ *                            (`isPending: false`).
  *   - Auth disabled (`VITE_AUTH_ENABLED=false`) -> `DEV_USER`, never pending.
  *
  * Protect a route by waiting out `isPending` before acting on `user` —
@@ -51,21 +51,27 @@ export type CurrentUserState = {
  *   if (isPending) return null;              // still resolving — don't redirect yet
  *   if (!user) return <RedirectToSignIn />;  // definitely signed out
  *
- * `authEnabled` is a module-level constant fixed at load, so the guarded hook
- * call keeps a stable hook order across every render of a given component.
+ * The Supabase hook is called unconditionally so hook order stays stable; the
+ * `authEnabled` branch only chooses which result to return.
  */
 export function useCurrentUserState(): CurrentUserState {
+  const { user, isPending } = useSupabaseAuth();
+
   if (!authEnabled) return { user: DEV_USER, isPending: false };
-  // eslint-disable-next-line react-hooks/rules-of-hooks -- authEnabled is constant for the app's lifetime
-  const { data, isPending } = authClient.useSession();
-  const user = data?.user;
+
   return {
     user: user
       ? {
           id: user.id,
-          displayName: user.name ?? null,
+          displayName:
+            (user.user_metadata?.full_name as string | undefined) ??
+            (user.user_metadata?.name as string | undefined) ??
+            null,
           primaryEmail: user.email ?? null,
-          profileImageUrl: user.image ?? null,
+          profileImageUrl:
+            (user.user_metadata?.avatar_url as string | undefined) ??
+            (user.user_metadata?.picture as string | undefined) ??
+            null,
           isDevFallback: false,
         }
       : null,
