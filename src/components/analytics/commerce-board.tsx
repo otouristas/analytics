@@ -13,13 +13,23 @@ export function CommerceBoard() {
   const setView = useAnalytics((s) => s.setView);
 
   const confirmedEvents = useMemo(() => events.filter((e) => e.valueType === "confirmed"), [events]);
-  const confirmedTotalCents = useMemo(() => stats.confirmedRevenueCents ?? 8492000, [stats.confirmedRevenueCents]);
-  const estimatedTotalCents = useMemo(() => stats.estimatedRevenueCents ?? 2748000, [stats.estimatedRevenueCents]);
+  const liveOrders = useMemo(
+    () => confirmedEvents.filter((e) => (e.amountCents ?? 0) > 0),
+    [confirmedEvents],
+  );
 
-  const ordersCount = confirmedEvents.filter((e) => (e.amountCents ?? 0) > 0).length || 2184;
-  const revenuePerVisitor = people.length > 0 ? (confirmedTotalCents / 100) / people.length : 66.12;
+  /**
+   * Whether this property has real confirmed revenue in the stream.
+   *
+   * Everything below derives from THIS one flag. Previously the revenue total
+   * used `?? fallback` (which does not fire on a real 0) while the order count
+   * used `|| fallback` (which does), so the header read "€0 confirmed revenue"
+   * beside "2,184 confirmed orders", above a table of four unrelated rows.
+   * One source of truth, or the numbers contradict each other.
+   */
+  const hasLiveRevenue = liveOrders.length > 0;
 
-  const mockTransactions = [
+  const sampleTransactions = [
     {
       id: "ord_91823",
       source: "Stripe",
@@ -58,7 +68,38 @@ export function CommerceBoard() {
     },
   ];
 
-  const columns: Column<typeof mockTransactions[0]>[] = [
+  // Live orders, shaped like the sample rows so one table renders both.
+  const liveTransactions = useMemo(
+    () =>
+      liveOrders.slice(0, 25).map((e, i) => ({
+        id: e.id || `evt_${i}`,
+        // The tracker records which integration signed the webhook in `source`.
+        source: e.source || "Webhook",
+        amount: `€${((e.amountCents ?? 0) / 100).toFixed(2)}`,
+        customer: e.path || "—",
+        item: e.label || e.title || "Confirmed order",
+        status: "Confirmed",
+        date: relativeTime(e.ts),
+      })),
+    [liveOrders],
+  );
+
+  const transactions = hasLiveRevenue ? liveTransactions : sampleTransactions;
+
+  // Totals ALWAYS come from the rows on screen.
+  const confirmedTotalCents = useMemo(
+    () =>
+      hasLiveRevenue
+        ? liveOrders.reduce((n, e) => n + (e.amountCents ?? 0), 0)
+        : sampleTransactions.reduce((n, t) => n + Math.round(parseFloat(t.amount.slice(1)) * 100), 0),
+    [hasLiveRevenue, liveOrders, sampleTransactions],
+  );
+  const estimatedTotalCents = stats.estimatedRevenueCents ?? 0;
+  const ordersCount = transactions.length;
+  const revenuePerVisitor =
+    people.length > 0 ? confirmedTotalCents / 100 / people.length : 0;
+
+  const columns: Column<(typeof sampleTransactions)[0]>[] = [
     {
       id: "id",
       header: "Transaction ID",
@@ -112,13 +153,26 @@ export function CommerceBoard() {
     <div className="flex-1 overflow-y-auto dock-safe">
       {/* 1. Property Header */}
       <PropertyHeader
+        eyebrow={hasLiveRevenue ? "Verified transactions" : "Sample data"}
         title="Revenue Intelligence"
-        subtitle="Verified server-trusted transactions vs modeled referral intent"
+        subtitle={
+          hasLiveRevenue
+            ? "Server-verified transactions against modelled referral intent."
+            : "No confirmed transactions in this stream yet — showing a sample so the layout is legible. Connect a payment webhook to populate it."
+        }
         kpis={[
-          { label: "Confirmed Revenue", value: `€${((confirmedTotalCents) / 100).toLocaleString()}`, delta: "+11.3%", positive: true },
-          { label: "Estimated Value", value: `€${((estimatedTotalCents) / 100).toLocaleString()}`, delta: "Modelled", positive: true },
-          { label: "Confirmed Orders", value: ordersCount.toLocaleString(), delta: "+8.2%", positive: true },
-          { label: "Rev / Session", value: `€${revenuePerVisitor.toFixed(2)}`, delta: "+2.4%", positive: true },
+          {
+            label: "Confirmed Revenue",
+            value: `€${(confirmedTotalCents / 100).toLocaleString()}`,
+            delta: hasLiveRevenue ? "verified" : "sample data",
+          },
+          {
+            label: "Estimated Value",
+            value: `€${(estimatedTotalCents / 100).toLocaleString()}`,
+            delta: "modelled",
+          },
+          { label: "Confirmed Orders", value: ordersCount.toLocaleString() },
+          { label: "Rev / Session", value: `€${revenuePerVisitor.toFixed(2)}` },
         ]}
         actions={
           <button
@@ -166,11 +220,22 @@ export function CommerceBoard() {
         <DataTable
           title="Verified Transaction Stream"
           columns={columns}
-          data={mockTransactions}
+          data={transactions}
           searchPlaceholder="Search order ID or item..."
           searchKey={(r) => `${r.id} ${r.item} ${r.customer}`}
         />
       </div>
     </div>
   );
+}
+
+/** "12m ago" / "2h ago" / "3d ago" from an epoch-ms timestamp. */
+function relativeTime(ts: number | undefined): string {
+  if (!ts) return "—";
+  const mins = Math.max(0, Math.round((Date.now() - ts) / 60_000));
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
 }
